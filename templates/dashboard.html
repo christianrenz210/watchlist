@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — WatchList</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root { --primary: #6c63ff; --dark: #111318; --card-bg: #1c1e26; }
+    body { background: var(--dark); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; }
+    .navbar { background: rgba(15,15,26,0.98); border-bottom: 1px solid rgba(108,99,255,0.2); }
+    .stat-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.4rem; transition: all .3s; }
+    .stat-card:hover { border-color: rgba(108,99,255,0.3); transform: translateY(-2px); }
+    .stat-card .number { font-size: 2rem; font-weight: 800; }
+    .stat-card .label { color: #888; font-size: .85rem; }
+    .filter-bar { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 1rem 1.2rem; }
+    .form-control, .form-select { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: #e0e0e0 !important; border-radius: 10px; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(108,99,255,0.2) !important; }
+    .form-control::placeholder { color: #666; }
+    .form-select option { background: #1a1a2e; }
+    /* TABLE */
+    .table-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .table { color: #e0e0e0; margin: 0; border-collapse: separate; border-spacing: 0; }
+    .table thead tr { background: linear-gradient(90deg, rgba(108,99,255,0.18), rgba(108,99,255,0.06)); }
+    .table thead th { border: none; border-bottom: 1px solid rgba(108,99,255,0.2); color: #a29bfe; font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; padding: 16px 18px; font-weight: 700; white-space: nowrap; }
+    .table tbody td { border: none; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 14px 18px; vertical-align: middle; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr { transition: background .15s; }
+    .table tbody tr:hover td { background: rgba(108,99,255,0.06); }
+    .row-num { color: #555; font-size: .8rem; font-weight: 600; width: 40px; }
+    .title-cell { font-weight: 600; color: #fff; font-size: .95rem; }
+    .title-cell small { display: block; color: #666; font-size: .75rem; font-weight: 400; margin-top: 2px; }
+    /* STATUS BADGES */
+    .badge-watching { background: rgba(255,193,7,0.12); color: #ffc107; border: 1px solid rgba(255,193,7,0.25); }
+    .badge-completed { background: rgba(40,167,69,0.12); color: #6fcf97; border: 1px solid rgba(40,167,69,0.25); }
+    .badge-plan { background: rgba(86,207,225,0.12); color: #56cfe1; border: 1px solid rgba(86,207,225,0.25); }
+    .badge-dropped { background: rgba(220,53,69,0.12); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.25); }
+    .status-badge { border-radius: 50px; padding: 5px 14px; font-size: .75rem; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
+    .cat-badge { background: rgba(108,99,255,0.15); color: #a29bfe; border-radius: 8px; padding: 4px 12px; font-size: .75rem; font-weight: 600; border: 1px solid rgba(108,99,255,0.2); white-space: nowrap; }
+    /* EPISODE PROGRESS IN TABLE */
+    .ep-cell { min-width: 120px; cursor: pointer; }
+    .ep-cell:hover .ep-bar-wrap { opacity: .8; }
+    .ep-count { font-size: .78rem; font-weight: 600; margin-bottom: 5px; }
+    .ep-bar-wrap { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+    .ep-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width .7s cubic-bezier(.4,0,.2,1); }
+    /* STARS */
+    .stars { color: #ffc107; font-size: .85rem; letter-spacing: 1px; }
+    /* NOTES */
+    .notes-cell { color: #777; font-size: .82rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ACTION BUTTONS */
+    .action-wrap { display: flex; gap: 6px; }
+    .modal-content { background: var(--card-bg); border: 1px solid rgba(108,99,255,0.2); border-radius: 16px; color: #e0e0e0; }
+    .modal-header { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .modal-footer { border-top: 1px solid rgba(255,255,255,0.06); }
+    .btn-close { filter: invert(1); }
+    .btn-add { background: var(--primary); border: none; border-radius: 10px; padding: 10px 20px; font-weight: 600; color: #fff; transition: all .3s; }
+    .btn-add:hover { background: #5a52d5; color: #fff; box-shadow: 0 4px 15px rgba(108,99,255,0.4); }
+    .btn-icon { background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 11px; color: #aaa; transition: all .2s; font-size: .85rem; }
+    .btn-icon:hover { border-color: var(--primary); color: var(--primary); background: rgba(108,99,255,0.08); }
+    .btn-icon.del:hover { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.08); }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: #555; }
+    .empty-state i { font-size: 4rem; margin-bottom: 1rem; }
+
+    /* EPISODE LIST */
+    .ep-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; transition: all .2s; cursor: pointer; }
+    .ep-item:hover { border-color: rgba(108,99,255,0.3); background: rgba(108,99,255,0.05); }
+    .ep-item.watched { background: rgba(40,167,69,0.08); border-color: rgba(40,167,69,0.25); }
+    .ep-item.watched .ep-label { text-decoration: line-through; color: #888; }
+    .ep-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .2s; }
+    .ep-item.watched .ep-check { background: #6fcf97; border-color: #6fcf97; color: #0f0f1a; }
+    .ep-progress { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 6px; }
+    .ep-progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #6fcf97); border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 8px rgba(108,99,255,0.5); }
+
+    /* rating row toggle */
+    .rating-row { transition: all .2s; }
+    .ep-row { transition: all .2s; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold" href="/"><i class="bi bi-play-circle-fill me-2" style="color:var(--primary)"></i><span class="text-white">WatchList</span></a>
+    <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="text-muted small d-none d-md-block"><i class="bi bi-person-circle me-1"></i>{{ username }}</span>
+      <a href="/logout" class="btn btn-icon btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-white" id="statTotal">0</div><div class="label"><i class="bi bi-collection me-1"></i>Total</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-warning" id="statWatching">0</div><div class="label"><i class="bi bi-play-circle me-1"></i>Watching</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-success" id="statCompleted">0</div><div class="label"><i class="bi bi-check-circle me-1"></i>Completed</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-info" id="statPlan">0</div><div class="label"><i class="bi bi-bookmark me-1"></i>Plan to Watch</div></div></div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar mb-4">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#888;border-radius:10px 0 0 10px;"><i class="bi bi-search"></i></span>
+          <input type="text" id="searchInput" class="form-control" placeholder="Search title..." style="border-radius:0 10px 10px 0;"/>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select id="filterCategory" class="form-select">
+          <option value="">All Categories</option>
+          <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="filterStatus" class="form-select">
+          <option value="">All Status</option>
+          <option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-add w-100" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg me-1"></i>Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Episodes</th>
+            <th>Rating</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="watchlistBody">
+          <tr><td colspan="8"><div class="empty-state"><i class="bi bi-collection-play d-block"></i><p>Loading your watchlist...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2" style="color:var(--primary)"></i>Add to Watchlist</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label text-muted small">Title *</label>
+          <input type="text" id="addTitle" class="form-control" placeholder="e.g. Attack on Titan"/>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label text-muted small">Category</label>
+            <select id="addCategory" class="form-select">
+              <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label text-muted small">Status</label>
+            <select id="addStatus" class="form-select" onchange="toggleAddFields()">
+              <option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option>
+            </select>
+          </div>
+        </div>
+        <!-- Episodes field (Watching only) -->
+        <div class="mb-3 ep-row" id="addEpRow" style="display:none">
+          <label class="form-label text-muted small"><i class="bi bi-collection-play me-1"></i>Total Episodes</label>
+          <input type="number" id="addTotalEp" class="form-control" min="1" max="9999" placeholder="e.g. 24"/>
+        </div>
+        <!-- Rating field (hidden for Plan to Watch) -->
+        <div class="mb-3 rating-row" id="addRatingRow">
+          <label class="form-label text-muted small">Rating (0–10)</label>
+          <input type="number" id="addRating" class="form-control" min="0" max="10" value="0"/>
+        </div>
+        <div class="mb-1">
+          <label class="form-label text-muted small">Notes</label>
+          <textarea id="addNotes" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-add" onclick="addItem()"><i class="bi bi-plus-lg me-1"></i>Add Item</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2" style="color:var(--primary)"></i>Edit Item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editId"/>
+        <div class="mb-3">
+          <label class="form-label text-muted small">Title *</label>
+          <input type="text" id="editTitle" class="form-control"/>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label text-muted small">Category</label>
+            <select id="editCategory" class="form-select">
+              <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label text-muted small">Status</label>
+            <select id="editStatus" class="form-select" onchange="toggleEditFields()">
+              <option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-3 ep-row" id="editEpRow" style="display:none">
+          <label class="form-label text-muted small"><i class="bi bi-collection-play me-1"></i>Total Episodes</label>
+          <input type="number" id="editTotalEp" class="form-control" min="1" max="9999" placeholder="e.g. 24"/>
+          <div class="text-warning small mt-1"><i class="bi bi-exclamation-triangle me-1"></i>Changing total will reset episode progress.</div>
+        </div>
+        <div class="mb-3 rating-row" id="editRatingRow">
+          <label class="form-label text-muted small">Rating (0–10)</label>
+          <input type="number" id="editRating" class="form-control" min="0" max="10"/>
+        </div>
+        <div class="mb-1">
+          <label class="form-label text-muted small">Notes</label>
+          <textarea id="editNotes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-add" onclick="saveEdit()"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EPISODES MODAL -->
+<div class="modal fade" id="epModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title fw-bold" id="epModalTitle"><i class="bi bi-collection-play me-2" style="color:#ffc107"></i>Episodes</h5>
+          <div class="text-muted small mt-1" id="epModalProgress"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="ep-progress mb-3"><div class="ep-progress-bar" id="epProgressBar" style="width:0%"></div></div>
+        <div id="epList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const addModal = new bootstrap.Modal(document.getElementById('addModal'));
+  const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+  const epModal = new bootstrap.Modal(document.getElementById('epModal'));
+
+  // --- Field visibility toggles ---
+  function toggleAddFields() {
+    const s = document.getElementById('addStatus').value;
+    document.getElementById('addRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
+    document.getElementById('addEpRow').style.display = '';
+  }
+  function toggleEditFields() {
+    const s = document.getElementById('editStatus').value;
+    document.getElementById('editRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
+    document.getElementById('editEpRow').style.display = '';
+  }
+  // init on load
+  toggleAddFields();
+
+  // --- Helpers ---
+  function statusBadge(s) {
+    const map = { 'Watching': 'badge-watching', 'Completed': 'badge-completed', 'Plan to Watch': 'badge-plan', 'Dropped': 'badge-dropped' };
+    return `<span class="status-badge ${map[s] || 'badge-plan'}">${s}</span>`;
+  }
+  function stars(r) {
+    if (!r) return '<span class="text-muted small">—</span>';
+    return `<span class="stars">${'★'.repeat(Math.round(r/2))}${'☆'.repeat(5-Math.round(r/2))}</span> <small class="text-muted">${r}/10</small>`;
+  }
+
+  // --- Stats ---
+  async function loadStats() {
+    const d = await fetch('/api/stats').then(r => r.json());
+    document.getElementById('statTotal').textContent = d.total;
+    document.getElementById('statWatching').textContent = d.watching;
+    document.getElementById('statCompleted').textContent = d.completed;
+    document.getElementById('statPlan').textContent = d.plan;
+  }
+
+  // --- Watchlist ---
+  async function loadList() {
+    const params = new URLSearchParams({
+      search: document.getElementById('searchInput').value,
+      category: document.getElementById('filterCategory').value,
+      status: document.getElementById('filterStatus').value
+    });
+    const items = await fetch('/api/watchlist?' + params).then(r => r.json());
+    const tbody = document.getElementById('watchlistBody');
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-collection-play d-block"></i><p>No items found. Add something to watch!</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = items.map((item, i) => {
+      const pct = item.total_episodes > 0 ? Math.round((item.watched_count||0) / item.total_episodes * 100) : 0;
+      const epClass = pct === 100 ? 'ep-done' : pct > 0 ? 'ep-progress' : 'ep-none';
+      const epIcon = pct === 100 ? 'bi-check-circle-fill' : 'bi-play-circle-fill';
+      const barBg = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444';
+      const epCell = item.total_episodes > 0
+        ? `<span class="ep-pill ${epClass}" onclick="openEpisodes(${item.id})">
+             <i class="bi ${epIcon}" style="font-size:.8rem"></i>
+             ${item.watched_count||0}/${item.total_episodes}
+             <span class="ep-mini-bar"><span class="ep-mini-fill" data-pct="${pct}" style="width:0%;background-color:${barBg}"></span></span>
+           </span>`
+        : `<span style="color:#444">—</span>`;
+      const ratingCell = item.status === 'Plan to Watch'
+        ? `<span style="color:#444">—</span>`
+        : stars(item.rating);
+      return `<tr>
+        <td class="row-num">${i+1}</td>
+        <td class="title-cell">${item.title}</td>
+        <td><span class="cat-badge">${item.category}</span></td>
+        <td>${statusBadge(item.status)}</td>
+        <td>${epCell}</td>
+        <td>${ratingCell}</td>
+        <td class="notes-cell" title="${(item.notes||'').replace(/"/g,'&quot;')}">${item.notes||'—'}</td>
+        <td>
+          <div class="action-wrap">
+            <button class="btn btn-icon btn-sm" onclick='openEdit(${JSON.stringify(item)})' title="Edit"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-icon del btn-sm" onclick="deleteItem(${item.id})" title="Delete"><i class="bi bi-trash"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    // animate mini bars
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.querySelectorAll('.ep-mini-fill').forEach(el => {
+        el.style.width = el.dataset.pct + '%';
+        const pct = +el.dataset.pct;
+        el.style.backgroundColor = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444';
+      });
+    }));
+  }
+
+  // --- Add ---
+  async function addItem() {
+    const title = document.getElementById('addTitle').value.trim();
+    if (!title) return alert('Please enter a title.');
+    const status = document.getElementById('addStatus').value;
+    await fetch('/api/watchlist', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title, category: document.getElementById('addCategory').value,
+        status, rating: status !== 'Plan to Watch' ? +document.getElementById('addRating').value : 0,
+        total_episodes: +document.getElementById('addTotalEp').value || 0,
+        notes: document.getElementById('addNotes').value
+      })
+    });
+    addModal.hide();
+    document.getElementById('addTitle').value = '';
+    document.getElementById('addNotes').value = '';
+    document.getElementById('addRating').value = 0;
+    document.getElementById('addTotalEp').value = '';
+    loadList(); loadStats();
+  }
+
+  // --- Edit ---
+  function openEdit(item) {
+    document.getElementById('editId').value = item.id;
+    document.getElementById('editTitle').value = item.title;
+    document.getElementById('editCategory').value = item.category;
+    document.getElementById('editStatus').value = item.status;
+    document.getElementById('editRating').value = item.rating;
+    document.getElementById('editNotes').value = item.notes || '';
+    document.getElementById('editTotalEp').value = item.total_episodes || '';
+    toggleEditFields();
+    editModal.show();
+  }
+  async function saveEdit() {
+    const id = document.getElementById('editId').value;
+    const title = document.getElementById('editTitle').value.trim();
+    if (!title) return alert('Title cannot be empty.');
+    const status = document.getElementById('editStatus').value;
+    await fetch(`/api/watchlist/${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title, category: document.getElementById('editCategory').value,
+        status, rating: status !== 'Plan to Watch' ? +document.getElementById('editRating').value : 0,
+        total_episodes: +document.getElementById('editTotalEp').value || 0,
+        notes: document.getElementById('editNotes').value
+      })
+    });
+    editModal.hide();
+    loadList(); loadStats();
+  }
+
+  // --- Delete ---
+  async function deleteItem(id) {
+    if (!confirm('Remove this item from your watchlist?')) return;
+    await fetch(`/api/watchlist/${id}`, { method: 'DELETE' });
+    loadList(); loadStats();
+  }
+
+  // --- Episodes ---
+  let currentEpItemId = null;
+  async function openEpisodes(id) {
+    currentEpItemId = id;
+    const data = await fetch(`/api/episodes/${id}`).then(r => r.json());
+    document.getElementById('epModalTitle').innerHTML = `<i class="bi bi-collection-play me-2" style="color:#ffc107"></i>${data.title}`;
+    renderEpisodes(data.episodes);
+    epModal.show();
+  }
+  function renderEpisodes(eps) {
+    const watched = eps.filter(e => e.watched).length;
+    const total = eps.length;
+    const pct = total ? Math.round(watched / total * 100) : 0;
+    document.getElementById('epModalProgress').textContent = `${watched} / ${total} episodes watched (${pct}%)`;
+    // animate from 0 then to actual value
+    const bar = document.getElementById('epProgressBar');
+    bar.style.width = '0%';
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + '%'; }));
+    document.getElementById('epList').innerHTML = eps.map(ep => `
+      <div class="ep-item ${ep.watched ? 'watched' : ''}" onclick="toggleEp(${ep.id})">
+        <div class="ep-check">${ep.watched ? '<i class="bi bi-check-lg" style="font-size:.8rem"></i>' : ''}</div>
+        <span class="ep-label">Episode ${ep.episode_number}</span>
+      </div>`).join('');
+  }
+  async function toggleEp(epId) {
+    await fetch(`/api/episodes/${epId}/toggle`, { method: 'POST' });
+    const data = await fetch(`/api/episodes/${currentEpItemId}`).then(r => r.json());
+    renderEpisodes(data.episodes);
+    loadList();
+  }
+
+  ['searchInput','filterCategory','filterStatus'].forEach(id => {
+    document.getElementById(id).addEventListener('input', loadList);
+  });
+
+  loadList(); loadStats();
+</script>
+</body>
+</html>

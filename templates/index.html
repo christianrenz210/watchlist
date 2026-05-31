@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WatchList — Track Everything You Watch</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #6c63ff;
+      --dark: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --accent: #e94560;
+    }
+    * { scroll-behavior: smooth; }
+    body { background: var(--dark); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; }
+
+    /* NAVBAR */
+    .navbar { background: rgba(15,15,26,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(108,99,255,0.2); }
+    .navbar-brand span { color: var(--primary); }
+    .nav-link { color: #ccc !important; transition: color .2s; }
+    .nav-link:hover { color: var(--primary) !important; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 60% 40%, rgba(108,99,255,0.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 20% 80%, rgba(233,69,96,0.1) 0%, transparent 50%),
+                  var(--dark);
+      display: flex; align-items: center;
+    }
+    .hero-badge { background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.4); color: var(--primary); border-radius: 50px; padding: 6px 16px; font-size: .85rem; display: inline-block; margin-bottom: 1.5rem; }
+    .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; }
+    .hero h1 .highlight { color: var(--primary); }
+    .hero p.lead { color: #aaa; font-size: 1.15rem; max-width: 520px; }
+    .btn-primary-custom { background: var(--primary); border: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 1rem; color: #fff; transition: all .3s; }
+    .btn-primary-custom:hover { background: #5a52d5; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,99,255,0.4); color: #fff; }
+    .btn-outline-custom { border: 2px solid rgba(255,255,255,0.2); padding: 14px 32px; border-radius: 50px; font-weight: 600; color: #fff; background: transparent; transition: all .3s; }
+    .btn-outline-custom:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* HERO CARD PREVIEW */
+    .hero-preview { background: var(--card-bg); border: 1px solid rgba(108,99,255,0.2); border-radius: 20px; padding: 1.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .preview-item { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+    .preview-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .preview-title { font-size: .9rem; font-weight: 500; }
+    .preview-badge { font-size: .72rem; padding: 3px 10px; border-radius: 50px; }
+
+    /* STATS */
+    .stats-section { background: var(--card-bg); border-top: 1px solid rgba(108,99,255,0.1); border-bottom: 1px solid rgba(108,99,255,0.1); }
+    .stat-item h2 { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+    .stat-item p { color: #888; margin: 0; }
+
+    /* FEATURES */
+    .feature-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 2rem; height: 100%; transition: all .3s; }
+    .feature-card:hover { border-color: rgba(108,99,255,0.4); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(108,99,255,0.15); }
+    .feature-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.2rem; }
+
+    /* CATEGORIES */
+    .category-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all .3s; cursor: default; }
+    .category-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+    .category-card .icon { font-size: 2.5rem; margin-bottom: .8rem; }
+
+    /* CTA */
+    .cta-section { background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(233,69,96,0.1)); border: 1px solid rgba(108,99,255,0.2); border-radius: 24px; }
+
+    /* FOOTER */
+    footer { background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05); }
+
+    section { padding: 80px 0; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold fs-4" href="/"><i class="bi bi-play-circle-fill me-2" style="color:var(--primary)"></i>Watch<span>List</span></a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#categories">Categories</a></li>
+        {% if logged_in %}
+        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
+        <li class="nav-item"><span class="nav-link text-muted"><i class="bi bi-person-circle me-1"></i>{{ username }}</span></li>
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+        {% else %}
+        <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+        <li class="nav-item"><a class="btn btn-primary-custom btn-sm px-4" href="/register">Get Started</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero pt-5">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="hero-badge"><i class="bi bi-stars me-1"></i> Your Personal Watch Tracker</div>
+        <h1>Track Every Show, <span class="highlight">Movie & Anime</span> You Watch</h1>
+        <p class="lead mt-3 mb-4">Organize your watchlist, track your progress, rate what you've seen, and never lose track of what to watch next.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="/register" class="btn btn-primary-custom"><i class="bi bi-rocket-takeoff me-2"></i>Start for Free</a>
+          <a href="/login" class="btn btn-outline-custom"><i class="bi bi-box-arrow-in-right me-2"></i>Login</a>
+        </div>
+        <div class="mt-4 d-flex gap-4">
+          <div><span class="fw-bold text-white">100%</span> <span class="text-muted small">Free</span></div>
+          <div><span class="fw-bold text-white">No Ads</span> <span class="text-muted small">Ever</span></div>
+          <div><span class="fw-bold text-white">Secure</span> <span class="text-muted small">Account</span></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="hero-preview">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="fw-semibold">
+              <i class="bi bi-collection-play me-2" style="color:var(--primary)"></i>
+              <span id="previewTitle">{% if logged_in %}My Watchlist{% else %}Recent Activity{% endif %}</span>
+            </span>
+            <span class="text-white small" id="previewCount">Loading...</span>
+          </div>
+          <div id="previewList">
+            <div class="text-center text-white py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</div>
+          </div>
+          {% if not logged_in %}
+          <div class="text-center mt-3">
+            <a href="/register" class="btn btn-primary-custom btn-sm px-4"><i class="bi bi-rocket-takeoff me-1"></i>Start Your Own List</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-section py-5">
+  <div class="container">
+    <div class="row text-center g-4">
+      <div class="col-6 col-md-3 stat-item"><h2>5+</h2><p>Categories</p></div>
+      <div class="col-6 col-md-3 stat-item"><h2>∞</h2><p>Items to Track</p></div>
+      <div class="col-6 col-md-3 stat-item"><h2>⭐ 10</h2><p>Rating Scale</p></div>
+      <div class="col-6 col-md-3 stat-item"><h2>100%</h2><p>Free Forever</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold fs-1">Everything You Need</h2>
+      <p class="text-muted">Powerful features to manage your entire watchlist</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(108,99,255,0.15)"><i class="bi bi-person-circle text-primary"></i></div>
+          <h5 class="fw-bold">Personal Account</h5>
+          <p class="text-muted mb-0">Register and login securely. Your watchlist is private and tied to your account stored in SQLite.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(233,69,96,0.15)"><i class="bi bi-funnel" style="color:var(--accent)"></i></div>
+          <h5 class="fw-bold">Filter & Search</h5>
+          <p class="text-muted mb-0">Quickly find any title by searching, or filter by category and watch status.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(255,193,7,0.15)"><i class="bi bi-star-fill text-warning"></i></div>
+          <h5 class="fw-bold">Rate & Review</h5>
+          <p class="text-muted mb-0">Give ratings from 1–10 and add personal notes to remember your thoughts.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(23,162,184,0.15)"><i class="bi bi-bar-chart-fill text-info"></i></div>
+          <h5 class="fw-bold">Dashboard Stats</h5>
+          <p class="text-muted mb-0">See your watching stats at a glance — total, watching, completed, and planned.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(40,167,69,0.15)"><i class="bi bi-check2-circle text-success"></i></div>
+          <h5 class="fw-bold">Status Tracking</h5>
+          <p class="text-muted mb-0">Mark items as Plan to Watch, Watching, Completed, or Dropped.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(108,99,255,0.15)"><i class="bi bi-pencil-square" style="color:var(--primary)"></i></div>
+          <h5 class="fw-bold">Edit Anytime</h5>
+          <p class="text-muted mb-0">Update or delete any entry in your list with a simple click. Full CRUD support.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section id="categories" style="background: rgba(255,255,255,0.01);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold fs-1">What Can You Track?</h2>
+      <p class="text-muted">Add anything you watch across all categories</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-6 col-md-2"><div class="category-card"><div class="icon">🎬</div><div class="fw-semibold">Movies</div></div></div>
+      <div class="col-6 col-md-2"><div class="category-card"><div class="icon">📺</div><div class="fw-semibold">TV Series</div></div></div>
+      <div class="col-6 col-md-2"><div class="category-card"><div class="icon">⛩️</div><div class="fw-semibold">Anime</div></div></div>
+      <div class="col-6 col-md-2"><div class="category-card"><div class="icon">📖</div><div class="fw-semibold">Manga</div></div></div>
+      <div class="col-6 col-md-2"><div class="category-card"><div class="icon">🎮</div><div class="fw-semibold">Games</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="container">
+    <div class="cta-section p-5 text-center">
+      <h2 class="fw-bold fs-1 mb-3">Ready to Start Tracking?</h2>
+      <p class="text-muted mb-4 fs-5">Create your free account and never lose track of what to watch next.</p>
+      <a href="/register" class="btn btn-primary-custom btn-lg px-5"><i class="bi bi-rocket-takeoff me-2"></i>Create Free Account</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="py-4">
+  <div class="container text-center text-muted">
+    <p class="mb-0"><i class="bi bi-play-circle-fill me-1" style="color:var(--primary)"></i><strong class="text-white">WatchList</strong> &copy; 2026 — Track everything you watch.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const dotColors = ['#6c63ff','#e94560','#17a2b8','#ffc107','#6fcf97','#a29bfe'];
+  const statusClass = {
+    'Watching': 'bg-warning bg-opacity-25 text-warning',
+    'Completed': 'bg-success bg-opacity-25 text-success',
+    'Plan to Watch': 'bg-info bg-opacity-25 text-info',
+    'Dropped': 'bg-danger bg-opacity-25 text-danger'
+  };
+
+  function renderItems(items, showUser) {
+    const list = document.getElementById('previewList');
+    const count = document.getElementById('previewCount');
+    if (!items.length) {
+      list.innerHTML = `<div class="text-center text-white py-4"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No items yet. Be the first to add!</div>`;
+      count.textContent = '0 items';
+      return;
+    }
+    count.textContent = items.length + ' item' + (items.length > 1 ? 's' : '');
+    list.innerHTML = items.map((item, i) => `
+      <div class="preview-item">
+        <div class="preview-dot" style="background:${dotColors[i % dotColors.length]}"></div>
+        <div class="flex-grow-1">
+          <div class="preview-title">${item.title}</div>
+          <small style="color:#ccc">${item.category}${showUser && item.username ? ' · <span style="color:#a29bfe">@'+item.username+'</span>' : ''}</small>
+        </div>
+        <span class="preview-badge ${statusClass[item.status] || 'bg-secondary bg-opacity-25 text-secondary'}">${item.status}</span>
+      </div>`).join('');
+  }
+
+  const loggedIn = {{ 'true' if logged_in else 'false' }};
+  const endpoint = loggedIn ? '/api/my-recent-watchlist' : '/api/recent-watchlist';
+
+  fetch(endpoint)
+    .then(r => r.json())
+    .then(items => renderItems(items, !loggedIn))
+    .catch(() => {
+      document.getElementById('previewList').innerHTML = `<div class="text-center text-white py-3">Could not load preview.</div>`;
+      document.getElementById('previewCount').textContent = '';
+    });
+</script>
+</body>
+</html>
