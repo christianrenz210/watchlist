@@ -15,6 +15,7 @@
     }
     * { scroll-behavior: smooth; }
     body { background: var(--dark); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; }
+    .text-muted { color: #ccc !important; }
 
     /* NAVBAR */
     .navbar { background: rgba(15,15,26,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(108,99,255,0.2); }
@@ -55,6 +56,8 @@
     .feature-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 2rem; height: 100%; transition: all .3s; }
     .feature-card:hover { border-color: rgba(108,99,255,0.4); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(108,99,255,0.15); }
     .feature-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.2rem; }
+    .feature-card h5 { color: #fff; }
+    .feature-card p { color: #ccc; }
 
     /* CATEGORIES */
     .category-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all .3s; cursor: default; }
@@ -154,49 +157,49 @@
   <div class="container">
     <div class="text-center mb-5">
       <h2 class="fw-bold fs-1">Everything You Need</h2>
-      <p class="text-muted">Powerful features to manage your entire watchlist</p>
+      <p class="">Powerful features to manage your entire watchlist</p>
     </div>
     <div class="row g-4">
       <div class="col-md-4">
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(108,99,255,0.15)"><i class="bi bi-person-circle text-primary"></i></div>
           <h5 class="fw-bold">Personal Account</h5>
-          <p class="text-muted mb-0">Register and login securely. Your watchlist is private and tied to your account stored in SQLite.</p>
+          <p class="mb-0">Register and login securely. Your watchlist is private and tied to your account stored in SQLite.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(233,69,96,0.15)"><i class="bi bi-funnel" style="color:var(--accent)"></i></div>
           <h5 class="fw-bold">Filter & Search</h5>
-          <p class="text-muted mb-0">Quickly find any title by searching, or filter by category and watch status.</p>
+          <p class="mb-0">Quickly find any title by searching, or filter by category and watch status.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(255,193,7,0.15)"><i class="bi bi-star-fill text-warning"></i></div>
           <h5 class="fw-bold">Rate & Review</h5>
-          <p class="text-muted mb-0">Give ratings from 1–10 and add personal notes to remember your thoughts.</p>
+          <p class="mb-0">Give ratings from 1–10 and add personal notes to remember your thoughts.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(23,162,184,0.15)"><i class="bi bi-bar-chart-fill text-info"></i></div>
           <h5 class="fw-bold">Dashboard Stats</h5>
-          <p class="text-muted mb-0">See your watching stats at a glance — total, watching, completed, and planned.</p>
+          <p class="mb-0">See your watching stats at a glance — total, watching, completed, and planned.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(40,167,69,0.15)"><i class="bi bi-check2-circle text-success"></i></div>
           <h5 class="fw-bold">Status Tracking</h5>
-          <p class="text-muted mb-0">Mark items as Plan to Watch, Watching, Completed, or Dropped.</p>
+          <p class="mb-0">Mark items as Plan to Watch, Watching, Completed, or Dropped.</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(108,99,255,0.15)"><i class="bi bi-pencil-square" style="color:var(--primary)"></i></div>
           <h5 class="fw-bold">Edit Anytime</h5>
-          <p class="text-muted mb-0">Update or delete any entry in your list with a simple click. Full CRUD support.</p>
+          <p class="mb-0">Update or delete any entry in your list with a simple click. Full CRUD support.</p>
         </div>
       </div>
     </div>
@@ -208,7 +211,7 @@
   <div class="container">
     <div class="text-center mb-5">
       <h2 class="fw-bold fs-1">What Can You Track?</h2>
-      <p class="text-muted">Add anything you watch across all categories</p>
+      <p class="">Add anything you watch across all categories</p>
     </div>
     <div class="row g-4 justify-content-center">
       <div class="col-6 col-md-2"><div class="category-card"><div class="icon">🎬</div><div class="fw-semibold">Movies</div></div></div>
@@ -225,7 +228,7 @@
   <div class="container">
     <div class="cta-section p-5 text-center">
       <h2 class="fw-bold fs-1 mb-3">Ready to Start Tracking?</h2>
-      <p class="text-muted mb-4 fs-5">Create your free account and never lose track of what to watch next.</p>
+      <p class="mb-4 fs-5">Create your free account and never lose track of what to watch next.</p>
       <a href="/register" class="btn btn-primary-custom btn-lg px-5"><i class="bi bi-rocket-takeoff me-2"></i>Create Free Account</a>
     </div>
   </div>
