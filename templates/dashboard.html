@@ -166,7 +166,7 @@
         <div class="row g-3 mb-3">
           <div class="col-6">
             <label class="form-label text-muted small">Category</label>
-            <select id="addCategory" class="form-select">
+            <select id="addCategory" class="form-select" onchange="toggleAddFields()">
               <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
             </select>
           </div>
@@ -217,7 +217,7 @@
         <div class="row g-3 mb-3">
           <div class="col-6">
             <label class="form-label text-muted small">Category</label>
-            <select id="editCategory" class="form-select">
+            <select id="editCategory" class="form-select" onchange="toggleEditFields()">
               <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
             </select>
           </div>
@@ -278,13 +278,15 @@
   // --- Field visibility toggles ---
   function toggleAddFields() {
     const s = document.getElementById('addStatus').value;
+    const cat = document.getElementById('addCategory').value;
     document.getElementById('addRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
-    document.getElementById('addEpRow').style.display = '';
+    document.getElementById('addEpRow').style.display = cat === 'Movie' ? 'none' : '';
   }
   function toggleEditFields() {
     const s = document.getElementById('editStatus').value;
+    const cat = document.getElementById('editCategory').value;
     document.getElementById('editRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
-    document.getElementById('editEpRow').style.display = '';
+    document.getElementById('editEpRow').style.display = cat === 'Movie' ? 'none' : '';
   }
   // init on load
   toggleAddFields();
@@ -326,7 +328,7 @@
       const epClass = pct === 100 ? 'ep-done' : pct > 0 ? 'ep-progress' : 'ep-none';
       const epIcon = pct === 100 ? 'bi-check-circle-fill' : 'bi-play-circle-fill';
       const barBg = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444';
-      const epCell = item.total_episodes > 0
+      const epCell = item.total_episodes > 0 && item.category !== 'Movie'
         ? `<span class="ep-pill ${epClass}" onclick="openEpisodes(${item.id})">
              <i class="bi ${epIcon}" style="font-size:.8rem"></i>
              ${item.watched_count||0}/${item.total_episodes}
