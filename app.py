@@ -255,3 +255,5 @@ def my_recent_watchlist():
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+else:
+    init_db()
