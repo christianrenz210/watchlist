@@ -54,6 +54,7 @@
     .modal-header { border-bottom: 1px solid rgba(255,255,255,0.06); }
     .modal-footer { border-top: 1px solid rgba(255,255,255,0.06); }
     .btn-close { filter: invert(1); }
+    .form-label { color: #ccc !important; }
     .btn-add { background: var(--primary); border: none; border-radius: 10px; padding: 10px 20px; font-weight: 600; color: #fff; transition: all .3s; }
     .btn-add:hover { background: #5a52d5; color: #fff; box-shadow: 0 4px 15px rgba(108,99,255,0.4); }
     .btn-icon { background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 11px; color: #aaa; transition: all .2s; font-size: .85rem; }
@@ -280,13 +281,25 @@
     const s = document.getElementById('addStatus').value;
     const cat = document.getElementById('addCategory').value;
     document.getElementById('addRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
-    document.getElementById('addEpRow').style.display = cat === 'Movie' ? 'none' : '';
+    const noEp = cat === 'Movie';
+    document.getElementById('addEpRow').style.display = noEp ? 'none' : '';
+    document.getElementById('addEpRow').querySelector('label').innerHTML =
+      cat === 'Manga'
+        ? '<i class="bi bi-book me-1"></i>Total Chapters'
+        : '<i class="bi bi-collection-play me-1"></i>Total Episodes';
+    document.getElementById('addTotalEp').placeholder = cat === 'Manga' ? 'e.g. 100' : 'e.g. 24';
   }
   function toggleEditFields() {
     const s = document.getElementById('editStatus').value;
     const cat = document.getElementById('editCategory').value;
     document.getElementById('editRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
-    document.getElementById('editEpRow').style.display = cat === 'Movie' ? 'none' : '';
+    const noEp = cat === 'Movie';
+    document.getElementById('editEpRow').style.display = noEp ? 'none' : '';
+    document.getElementById('editEpRow').querySelector('label').innerHTML =
+      cat === 'Manga'
+        ? '<i class="bi bi-book me-1"></i>Total Chapters'
+        : '<i class="bi bi-collection-play me-1"></i>Total Episodes';
+    document.getElementById('editTotalEp').placeholder = cat === 'Manga' ? 'e.g. 100' : 'e.g. 24';
   }
   // init on load
   toggleAddFields();
@@ -328,10 +341,11 @@
       const epClass = pct === 100 ? 'ep-done' : pct > 0 ? 'ep-progress' : 'ep-none';
       const epIcon = pct === 100 ? 'bi-check-circle-fill' : 'bi-play-circle-fill';
       const barBg = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444';
+      const epUnit = item.category === 'Manga' ? 'ch' : 'eps';
       const epCell = item.total_episodes > 0 && item.category !== 'Movie'
         ? `<span class="ep-pill ${epClass}" onclick="openEpisodes(${item.id})">
              <i class="bi ${epIcon}" style="font-size:.8rem"></i>
-             ${item.watched_count||0}/${item.total_episodes}
+             ${item.watched_count||0}/${item.total_episodes} ${epUnit}
              <span class="ep-mini-bar"><span class="ep-mini-fill" data-pct="${pct}" style="width:0%;background-color:${barBg}"></span></span>
            </span>`
         : `<span style="color:#444">—</span>`;
@@ -428,23 +442,25 @@
   async function openEpisodes(id) {
     currentEpItemId = id;
     const data = await fetch(`/api/episodes/${id}`).then(r => r.json());
-    document.getElementById('epModalTitle').innerHTML = `<i class="bi bi-collection-play me-2" style="color:#ffc107"></i>${data.title}`;
-    renderEpisodes(data.episodes);
+    const label = data.category === 'Manga' ? 'Chapters' : 'Episodes';
+    const icon = data.category === 'Manga' ? 'bi-book' : 'bi-collection-play';
+    document.getElementById('epModalTitle').innerHTML = `<i class="bi ${icon} me-2" style="color:#ffc107"></i>${data.title} — ${label}`;
+    renderEpisodes(data.episodes, data.category);
     epModal.show();
   }
-  function renderEpisodes(eps) {
+  function renderEpisodes(eps, category) {
+    const unit = category === 'Manga' ? 'Chapter' : 'Episode';
     const watched = eps.filter(e => e.watched).length;
     const total = eps.length;
     const pct = total ? Math.round(watched / total * 100) : 0;
-    document.getElementById('epModalProgress').textContent = `${watched} / ${total} episodes watched (${pct}%)`;
-    // animate from 0 then to actual value
+    document.getElementById('epModalProgress').textContent = `${watched} / ${total} ${unit.toLowerCase()}s watched (${pct}%)`;
     const bar = document.getElementById('epProgressBar');
     bar.style.width = '0%';
     requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + '%'; }));
     document.getElementById('epList').innerHTML = eps.map(ep => `
       <div class="ep-item ${ep.watched ? 'watched' : ''}" onclick="toggleEp(${ep.id})">
         <div class="ep-check">${ep.watched ? '<i class="bi bi-check-lg" style="font-size:.8rem"></i>' : ''}</div>
-        <span class="ep-label">Episode ${ep.episode_number}</span>
+        <span class="ep-label">${unit} ${ep.episode_number}</span>
       </div>`).join('');
   }
   async function toggleEp(epId) {
