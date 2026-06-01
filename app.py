@@ -219,7 +219,7 @@ def get_episodes(item_id):
         item = row(cur)
         if not item: return jsonify({'error': 'Not found'}), 404
         eps = rows(exe(conn, f'SELECT * FROM episodes WHERE watchlist_id={P} ORDER BY episode_number', (item_id,)))
-    return jsonify({'title': item['title'], 'episodes': eps})
+    return jsonify({'title': item['title'], 'category': item['category'], 'episodes': eps})
 
 @app.route('/api/episodes/<int:ep_id>/toggle', methods=['POST'])
 @login_required
