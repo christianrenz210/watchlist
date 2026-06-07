@@ -158,7 +158,7 @@
   <div class="container">
     <div class="text-center mb-5">
       <h2 class="fw-bold fs-1">Everything You Need</h2>
-      <p class="">Powerful features to manage your entire watchlist</p>
+      <p>Powerful features to manage your entire watchlist</p>
     </div>
     <div class="row g-4">
       <div class="col-md-4">
@@ -212,7 +212,7 @@
   <div class="container">
     <div class="text-center mb-5">
       <h2 class="fw-bold fs-1">What Can You Track?</h2>
-      <p class="">Add anything you watch across all categories</p>
+      <p>Add anything you watch across all categories</p>
     </div>
     <div class="row g-4 justify-content-center">
       <div class="col-6 col-md-2"><div class="category-card"><div class="icon"><i class="bi bi-camera-video" style="color:#6c63ff"></i></div><div class="fw-semibold">Movies</div></div></div>
@@ -272,7 +272,7 @@
       </div>`).join('');
   }
 
-  const loggedIn = {{ 'true' if logged_in else 'false' }};
+  const loggedIn = "{{ 'true' if logged_in else 'false' }}" === "true";
   const endpoint = loggedIn ? '/api/my-recent-watchlist' : '/api/recent-watchlist';
 
   fetch(endpoint)
