@@ -1,11 +1,48 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from functools import wraps
-import hashlib, os
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
+import hashlib, os, time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'watchlist_secret_key_2024')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 USE_PG = bool(DATABASE_URL)
+
+# Image upload configuration
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+# Create upload folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_uploaded_file(file):
+    """Save uploaded file and return filename"""
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # Add timestamp to avoid duplicate filenames
+        name, ext = os.path.splitext(filename)
+        timestamp = int(time.time())
+        unique_filename = f"{name}_{timestamp}{ext}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
+        return unique_filename
+    return None
+
+def delete_old_image(filename):
+    """Delete old image file from uploads folder"""
+    if filename:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 if USE_PG:
     import psycopg2
@@ -49,6 +86,7 @@ def init_db():
                 title TEXT NOT NULL, category TEXT DEFAULT 'Movie',
                 status TEXT DEFAULT 'Plan to Watch', rating INTEGER DEFAULT 0,
                 notes TEXT, total_episodes INTEGER DEFAULT 0,
+                image_url TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id))''')
             exe(conn, '''CREATE TABLE IF NOT EXISTS episodes (
@@ -66,6 +104,7 @@ def init_db():
                 title TEXT NOT NULL, category TEXT DEFAULT 'Movie',
                 status TEXT DEFAULT 'Plan to Watch', rating INTEGER DEFAULT 0,
                 notes TEXT, total_episodes INTEGER DEFAULT 0,
+                image_url TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id))''')
             exe(conn, '''CREATE TABLE IF NOT EXISTS episodes (
@@ -75,6 +114,7 @@ def init_db():
                 FOREIGN KEY (watchlist_id) REFERENCES watchlist(id))''')
             try:
                 exe(conn, 'ALTER TABLE watchlist ADD COLUMN total_episodes INTEGER DEFAULT 0')
+                exe(conn, 'ALTER TABLE watchlist ADD COLUMN image_url TEXT DEFAULT ""')
             except Exception:
                 pass
 
@@ -161,52 +201,133 @@ def get_watchlist():
 @app.route('/api/watchlist', methods=['POST'])
 @login_required
 def add_item():
-    data = request.json
-    status = data.get('status','Plan to Watch')
-    rating = data.get('rating',0) if status != 'Plan to Watch' else 0
-    total_eps = data.get('total_episodes',0)
-    with get_db() as conn:
-        if USE_PG:
-            cur = exe(conn,
-                f'INSERT INTO watchlist (user_id,title,category,status,rating,notes,total_episodes) VALUES ({P},{P},{P},{P},{P},{P},{P}) RETURNING id',
-                (session['user_id'],data['title'],data.get('category','Movie'),status,rating,data.get('notes',''),total_eps))
-            wid = cur.fetchone()[0]
+    try:
+        # Get form data (supports both JSON and FormData)
+        if request.is_json:
+            data = request.json
+            title = data.get('title')
+            category = data.get('category', 'Movie')
+            status = data.get('status', 'Plan to Watch')
+            rating = data.get('rating', 0) if status != 'Plan to Watch' else 0
+            total_eps = data.get('total_episodes', 0)
+            notes = data.get('notes', '')
+            image_filename = data.get('image_url', '')
         else:
-            cur = exe(conn,
-                f'INSERT INTO watchlist (user_id,title,category,status,rating,notes,total_episodes) VALUES ({P},{P},{P},{P},{P},{P},{P})',
-                (session['user_id'],data['title'],data.get('category','Movie'),status,rating,data.get('notes',''),total_eps))
-            wid = cur.lastrowid
-        if total_eps > 0:
-            for ep in range(1, total_eps+1):
-                exe(conn, f'INSERT INTO episodes (watchlist_id,episode_number) VALUES ({P},{P})', (wid,ep))
-    return jsonify({'success': True})
+            title = request.form.get('title')
+            category = request.form.get('category', 'Movie')
+            status = request.form.get('status', 'Plan to Watch')
+            rating = int(request.form.get('rating', 0)) if status != 'Plan to Watch' else 0
+            total_eps = int(request.form.get('total_episodes', 0))
+            notes = request.form.get('notes', '')
+            image_filename = ''
+            
+            # Handle image upload
+            if 'image' in request.files:
+                file = request.files['image']
+                if file and file.filename:
+                    saved_filename = save_uploaded_file(file)
+                    if saved_filename:
+                        image_filename = saved_filename
+        
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+        
+        with get_db() as conn:
+            if USE_PG:
+                cur = exe(conn,
+                    f'INSERT INTO watchlist (user_id,title,category,status,rating,notes,total_episodes,image_url) VALUES ({P},{P},{P},{P},{P},{P},{P},{P}) RETURNING id',
+                    (session['user_id'], title, category, status, rating, notes, total_eps, image_filename))
+                wid = cur.fetchone()[0]
+            else:
+                cur = exe(conn,
+                    f'INSERT INTO watchlist (user_id,title,category,status,rating,notes,total_episodes,image_url) VALUES ({P},{P},{P},{P},{P},{P},{P},{P})',
+                    (session['user_id'], title, category, status, rating, notes, total_eps, image_filename))
+                wid = cur.lastrowid
+            
+            if total_eps > 0:
+                for ep in range(1, total_eps + 1):
+                    exe(conn, f'INSERT INTO episodes (watchlist_id,episode_number) VALUES ({P},{P})', (wid, ep))
+        
+        return jsonify({'success': True, 'id': wid})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/watchlist/<int:item_id>', methods=['PUT'])
 @login_required
 def update_item(item_id):
-    data = request.json
-    status = data['status']
-    rating = data.get('rating',0) if status != 'Plan to Watch' else 0
-    total_eps = data.get('total_episodes',0)
-    with get_db() as conn:
-        exe(conn,
-            f'UPDATE watchlist SET title={P},category={P},status={P},rating={P},notes={P},total_episodes={P} WHERE id={P} AND user_id={P}',
-            (data['title'],data['category'],status,rating,data['notes'],total_eps,item_id,session['user_id']))
-        existing = exe(conn, f'SELECT COUNT(*) FROM episodes WHERE watchlist_id={P}', (item_id,)).fetchone()[0]
-        if total_eps > 0 and existing != total_eps:
-            exe(conn, f'DELETE FROM episodes WHERE watchlist_id={P}', (item_id,))
-            for ep in range(1, total_eps+1):
-                exe(conn, f'INSERT INTO episodes (watchlist_id,episode_number) VALUES ({P},{P})', (item_id,ep))
-        elif total_eps == 0:
-            exe(conn, f'DELETE FROM episodes WHERE watchlist_id={P}', (item_id,))
-        if status == 'Completed' and total_eps > 0:
-            exe(conn, f'UPDATE episodes SET watched=1 WHERE watchlist_id={P}', (item_id,))
-    return jsonify({'success': True})
+    try:
+        # Get current item to check existing image
+        with get_db() as conn:
+            cur = exe(conn, f'SELECT image_url FROM watchlist WHERE id={P} AND user_id={P}', 
+                      (item_id, session['user_id']))
+            current_item = row(cur)
+            current_image = current_item['image_url'] if current_item else ''
+        
+        # Get form data
+        if request.is_json:
+            data = request.json
+            title = data.get('title')
+            category = data.get('category', 'Movie')
+            status = data.get('status', 'Plan to Watch')
+            rating = data.get('rating', 0) if status != 'Plan to Watch' else 0
+            total_eps = data.get('total_episodes', 0)
+            notes = data.get('notes', '')
+            image_filename = data.get('image_url', current_image)
+        else:
+            title = request.form.get('title')
+            category = request.form.get('category', 'Movie')
+            status = request.form.get('status', 'Plan to Watch')
+            rating = int(request.form.get('rating', 0)) if status != 'Plan to Watch' else 0
+            total_eps = int(request.form.get('total_episodes', 0))
+            notes = request.form.get('notes', '')
+            image_filename = current_image
+            
+            # Handle image upload
+            if 'image' in request.files:
+                file = request.files['image']
+                if file and file.filename:
+                    # Delete old image if exists
+                    if current_image:
+                        delete_old_image(current_image)
+                    # Save new image
+                    saved_filename = save_uploaded_file(file)
+                    if saved_filename:
+                        image_filename = saved_filename
+        
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+        
+        with get_db() as conn:
+            exe(conn,
+                f'UPDATE watchlist SET title={P},category={P},status={P},rating={P},notes={P},total_episodes={P},image_url={P} WHERE id={P} AND user_id={P}',
+                (title, category, status, rating, notes, total_eps, image_filename, item_id, session['user_id']))
+            
+            existing = exe(conn, f'SELECT COUNT(*) FROM episodes WHERE watchlist_id={P}', (item_id,)).fetchone()[0]
+            if total_eps > 0 and existing != total_eps:
+                exe(conn, f'DELETE FROM episodes WHERE watchlist_id={P}', (item_id,))
+                for ep in range(1, total_eps + 1):
+                    exe(conn, f'INSERT INTO episodes (watchlist_id,episode_number) VALUES ({P},{P})', (item_id, ep))
+            elif total_eps == 0:
+                exe(conn, f'DELETE FROM episodes WHERE watchlist_id={P}', (item_id,))
+            
+            if status == 'Completed' and total_eps > 0:
+                exe(conn, f'UPDATE episodes SET watched=1 WHERE watchlist_id={P}', (item_id,))
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/watchlist/<int:item_id>', methods=['DELETE'])
 @login_required
 def delete_item(item_id):
     with get_db() as conn:
+        # Get image filename before deleting
+        cur = exe(conn, f'SELECT image_url FROM watchlist WHERE id={P} AND user_id={P}', 
+                  (item_id, session['user_id']))
+        item = row(cur)
+        if item and item['image_url']:
+            delete_old_image(item['image_url'])
+        
         exe(conn, f'DELETE FROM episodes WHERE watchlist_id={P}', (item_id,))
         exe(conn, f'DELETE FROM watchlist WHERE id={P} AND user_id={P}', (item_id, session['user_id']))
     return jsonify({'success': True})
@@ -248,7 +369,7 @@ def get_stats():
 def recent_watchlist():
     with get_db() as conn:
         items = rows(exe(conn,
-            'SELECT w.title,w.category,w.status,u.username FROM watchlist w '
+            'SELECT w.title,w.category,w.status,w.image_url,u.username FROM watchlist w '
             'JOIN users u ON u.id=w.user_id ORDER BY w.created_at DESC LIMIT 4'))
     return jsonify(items)
 
@@ -257,9 +378,15 @@ def recent_watchlist():
 def my_recent_watchlist():
     with get_db() as conn:
         items = rows(exe(conn,
-            f'SELECT title,category,status FROM watchlist WHERE user_id={P} ORDER BY created_at DESC LIMIT 4',
+            f'SELECT title,category,status,image_url FROM watchlist WHERE user_id={P} ORDER BY created_at DESC LIMIT 4',
             (session['user_id'],)))
     return jsonify(items)
+
+# Optional: Serve uploaded files (already handled by Flask's static folder)
+@app.route('/static/uploads/<filename>')
+def uploaded_file(filename):
+    from flask import send_from_directory
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     init_db()

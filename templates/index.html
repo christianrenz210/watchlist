@@ -59,6 +59,17 @@
     .feature-card h5 { color: #fff; }
     .feature-card p { color: #ccc; }
 
+    /* HOW IT WORKS SECTION */
+    .howitworks-section { background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(108,99,255,0.05)); }
+    .step-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 2rem; height: 100%; text-align: center; transition: all .3s; position: relative; overflow: hidden; }
+    .step-card:hover { border-color: rgba(108,99,255,0.4); transform: translateY(-5px); }
+    .step-number { width: 48px; height: 48px; background: var(--primary); border-radius: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; margin: 0 auto 1.2rem; color: white; box-shadow: 0 0 20px rgba(108,99,255,0.4); }
+    .step-icon { font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; }
+    .step-card h4 { color: #fff; margin-bottom: 0.75rem; }
+    .step-card p { color: #aaa; font-size: 0.9rem; line-height: 1.5; }
+    .step-connector { position: absolute; top: 50%; right: -20px; width: 40px; height: 2px; background: linear-gradient(90deg, rgba(108,99,255,0.4), transparent); }
+    @media (max-width: 768px) { .step-connector { display: none; } }
+
     /* CATEGORIES */
     .category-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all .3s; cursor: default; }
     .category-card:hover { border-color: var(--primary); transform: translateY(-3px); }
@@ -86,6 +97,7 @@
     <div class="collapse navbar-collapse" id="navMenu">
       <ul class="navbar-nav ms-auto align-items-center gap-2">
         <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#howitworks">How It Works</a></li>
         <li class="nav-item"><a class="nav-link" href="#categories">Categories</a></li>
         {% if logged_in %}
         <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
@@ -165,7 +177,7 @@
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(108,99,255,0.15)"><i class="bi bi-person-circle text-primary"></i></div>
           <h5 class="fw-bold">Personal Account</h5>
-          <p class="mb-0">Register and login securely. Your watchlist is private and tied to your account stored in SQLite.</p>
+          <p class="mb-0">Register and login securely. Your watchlist is private and tied to your account.</p>
         </div>
       </div>
       <div class="col-md-4">
@@ -204,6 +216,49 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS SECTION (BAGONG DAGDAG) -->
+<section id="howitworks" class="howitworks-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold fs-1">How It Works</h2>
+      <p>Get started in just 3 simple steps</p>
+    </div>
+    <div class="row g-4 position-relative">
+      <!-- Step 1 -->
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-icon"><i class="bi bi-person-plus-fill"></i></div>
+          <h4 class="fw-bold">Create Account</h4>
+          <p>Sign up for free with your email address. No credit card required, no hidden fees. Your watchlist is completely private to you.</p>
+          <div class="step-connector"></div>
+        </div>
+      </div>
+      <!-- Step 2 -->
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-icon"><i class="bi bi-plus-circle-fill"></i></div>
+          <h4 class="fw-bold">Add Your Items</h4>
+          <p>Start adding movies, TV series, anime, manga, or games to your list. Set categories, status, and total episodes/chapters.</p>
+          <div class="step-connector"></div>
+        </div>
+      </div>
+      <!-- Step 3 -->
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-icon"><i class="bi bi-check2-circle"></i></div>
+          <h4 class="fw-bold">Track & Enjoy</h4>
+          <p>Mark episodes as watched, update your progress, rate items when completed, and never lose track of what you've seen.</p>
+        </div>
+      </div>
+    </div>
+    
+    
   </div>
 </section>
 
@@ -265,11 +320,21 @@
       <div class="preview-item">
         <div class="preview-dot" style="background:${dotColors[i % dotColors.length]}"></div>
         <div class="flex-grow-1">
-          <div class="preview-title">${item.title}</div>
-          <small style="color:#ccc">${item.category}${showUser && item.username ? ' · <span style="color:#a29bfe">@'+item.username+'</span>' : ''}</small>
+          <div class="preview-title">${escapeHtml(item.title)}</div>
+          <small style="color:#ccc">${item.category}${showUser && item.username ? ' · <span style="color:#a29bfe">@'+escapeHtml(item.username)+'</span>' : ''}</small>
         </div>
         <span class="preview-badge ${statusClass[item.status] || 'bg-secondary bg-opacity-25 text-secondary'}">${item.status}</span>
       </div>`).join('');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
   }
 
   const loggedIn = "{{ 'true' if logged_in else 'false' }}" === "true";

@@ -1,491 +1,946 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Dashboard — WatchList</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
   <style>
-    :root { --primary: #6c63ff; --dark: #111318; --card-bg: #1c1e26; }
-    body { background: var(--dark); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; }
-    .navbar { background: rgba(15,15,26,0.98); border-bottom: 1px solid rgba(108,99,255,0.2); }
-    .stat-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.4rem; transition: all .3s; }
-    .stat-card:hover { border-color: rgba(108,99,255,0.3); transform: translateY(-2px); }
-    .stat-card .number { font-size: 2rem; font-weight: 800; }
-    .stat-card .label { color: #888; font-size: .85rem; }
-    .filter-bar { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 1rem 1.2rem; }
-    .form-control, .form-select { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: #e0e0e0 !important; border-radius: 10px; }
-    .form-control:focus, .form-select:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(108,99,255,0.2) !important; }
-    .form-control::placeholder { color: #666; }
-    .form-select option { background: #1a1a2e; }
-    /* TABLE */
-    .table-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-    .table { color: #e0e0e0; margin: 0; border-collapse: separate; border-spacing: 0; }
-    .table thead tr { background: linear-gradient(90deg, rgba(108,99,255,0.18), rgba(108,99,255,0.06)); }
-    .table thead th { border: none; border-bottom: 1px solid rgba(108,99,255,0.2); color: #a29bfe; font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; padding: 16px 18px; font-weight: 700; white-space: nowrap; }
-    .table tbody td { border: none; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 14px 18px; vertical-align: middle; }
-    .table tbody tr:last-child td { border-bottom: none; }
-    .table tbody tr { transition: background .15s; }
-    .table tbody tr:hover td { background: rgba(108,99,255,0.06); }
-    .row-num { color: #555; font-size: .8rem; font-weight: 600; width: 40px; }
-    .title-cell { font-weight: 600; color: #fff; font-size: .95rem; }
-    .title-cell small { display: block; color: #666; font-size: .75rem; font-weight: 400; margin-top: 2px; }
-    /* STATUS BADGES */
-    .badge-watching { background: rgba(255,193,7,0.12); color: #ffc107; border: 1px solid rgba(255,193,7,0.25); }
-    .badge-completed { background: rgba(40,167,69,0.12); color: #6fcf97; border: 1px solid rgba(40,167,69,0.25); }
-    .badge-plan { background: rgba(86,207,225,0.12); color: #56cfe1; border: 1px solid rgba(86,207,225,0.25); }
-    .badge-dropped { background: rgba(220,53,69,0.12); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.25); }
-    .status-badge { border-radius: 50px; padding: 5px 14px; font-size: .75rem; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
-    .cat-badge { background: rgba(108,99,255,0.15); color: #a29bfe; border-radius: 8px; padding: 4px 12px; font-size: .75rem; font-weight: 600; border: 1px solid rgba(108,99,255,0.2); white-space: nowrap; }
-    /* EPISODE PROGRESS IN TABLE */
-    .ep-cell { min-width: 120px; cursor: pointer; }
-    .ep-cell:hover .ep-bar-wrap { opacity: .8; }
-    .ep-count { font-size: .78rem; font-weight: 600; margin-bottom: 5px; }
-    .ep-bar-wrap { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-    .ep-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width .7s cubic-bezier(.4,0,.2,1); }
-    /* STARS */
-    .stars { color: #ffc107; font-size: .85rem; letter-spacing: 1px; }
-    /* NOTES */
-    .notes-cell { color: #777; font-size: .82rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* ACTION BUTTONS */
-    .action-wrap { display: flex; gap: 6px; }
-    .modal-content { background: var(--card-bg); border: 1px solid rgba(108,99,255,0.2); border-radius: 16px; color: #e0e0e0; }
-    .modal-header { border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .modal-footer { border-top: 1px solid rgba(255,255,255,0.06); }
-    .btn-close { filter: invert(1); }
-    .form-label { color: #ccc !important; }
-    .btn-add { background: var(--primary); border: none; border-radius: 10px; padding: 10px 20px; font-weight: 600; color: #fff; transition: all .3s; }
-    .btn-add:hover { background: #5a52d5; color: #fff; box-shadow: 0 4px 15px rgba(108,99,255,0.4); }
-    .btn-icon { background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 11px; color: #aaa; transition: all .2s; font-size: .85rem; }
-    .btn-icon:hover { border-color: var(--primary); color: var(--primary); background: rgba(108,99,255,0.08); }
-    .btn-icon.del:hover { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.08); }
-    .empty-state { text-align: center; padding: 4rem 2rem; color: #555; }
-    .empty-state i { font-size: 4rem; margin-bottom: 1rem; }
+    :root {
+      --primary: #6c63ff;
+      --dark: #111318;
+      --card-bg: #2a2a3e;
+    }
 
-    /* EPISODE LIST */
-    .ep-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; transition: all .2s; cursor: pointer; }
-    .ep-item:hover { border-color: rgba(108,99,255,0.3); background: rgba(108,99,255,0.05); }
-    .ep-item.watched { background: rgba(40,167,69,0.08); border-color: rgba(40,167,69,0.25); }
-    .ep-item.watched .ep-label { text-decoration: line-through; color: #888; }
-    .ep-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .2s; }
-    .ep-item.watched .ep-check { background: #6fcf97; border-color: #6fcf97; color: #0f0f1a; }
-    .ep-progress { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 6px; }
-    .ep-progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #6fcf97); border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 8px rgba(108,99,255,0.5); }
+    body {
+      background: var(--dark);
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+    }
 
-    /* EPISODE PILL IN TABLE */
-    .ep-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 50px; padding: 5px 14px; font-size: .78rem; font-weight: 600; color: #ccc; cursor: pointer; transition: all .2s; white-space: nowrap; }
-    .ep-pill:hover { border-color: rgba(108,99,255,0.4); background: rgba(108,99,255,0.08); }
-    .ep-pill.ep-done { color: #6fcf97; border-color: rgba(40,167,69,0.25); background: rgba(40,167,69,0.08); }
-    .ep-pill.ep-done i { color: #6fcf97; }
-    .ep-pill.ep-progress { color: #ffc107; border-color: rgba(255,193,7,0.25); background: rgba(255,193,7,0.08); }
-    .ep-pill.ep-progress i { color: #ffc107; }
-    .ep-pill.ep-none i { color: #555; }
-    .ep-mini-bar { display: inline-block; width: 40px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; vertical-align: middle; margin-left: 2px; }
-    .ep-mini-fill { display: block; height: 100%; border-radius: 2px; transition: width .7s cubic-bezier(.4,0,.2,1); }
+    .navbar {
+      background: rgba(15, 15, 26, 0.98);
+      border-bottom: 1px solid rgba(108, 99, 255, 0.2);
+    }
 
-    /* rating row toggle */
-    .rating-row { transition: all .2s; }
-    .ep-row { transition: all .2s; }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 1.4rem;
+      transition: all .3s;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(108, 99, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .stat-card .label {
+      color: #888;
+      font-size: .85rem;
+    }
+
+    .filter-bar {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+    }
+
+    .form-control,
+    .form-select {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #e0e0e0 !important;
+      border-radius: 10px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2) !important;
+    }
+
+    .form-control::placeholder {
+      color: #666;
+    }
+
+    .form-select option {
+      background: #1a1a2e;
+    }
+
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .table {
+      color: #e0e0e0;
+      margin: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .table thead tr {
+      background: linear-gradient(90deg, rgba(108, 99, 255, 0.18), rgba(108, 99, 255, 0.06));
+    }
+
+    .table thead th {
+      border: none;
+      border-bottom: 1px solid rgba(108, 99, 255, 0.2);
+      color: #a29bfe;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 16px 18px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .table tbody td {
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 14px 18px;
+      vertical-align: middle;
+    }
+
+    .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table tbody tr {
+      transition: background .15s;
+    }
+
+    .table tbody tr:hover td {
+      background: rgba(108, 99, 255, 0.06);
+    }
+
+    .row-num {
+      color: #555;
+      font-size: .8rem;
+      font-weight: 600;
+      width: 40px;
+    }
+
+    .title-cell {
+      font-weight: 600;
+      color: #e0e0e0;
+      font-size: .95rem;
+    }
+
+    .badge-watching {
+      background: rgba(255, 193, 7, 0.12);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.25);
+    }
+
+    .badge-completed {
+      background: rgba(40, 167, 69, 0.12);
+      color: #6fcf97;
+      border: 1px solid rgba(40, 167, 69, 0.25);
+    }
+
+    .badge-plan {
+      background: rgba(86, 207, 225, 0.12);
+      color: #56cfe1;
+      border: 1px solid rgba(86, 207, 225, 0.25);
+    }
+
+    .badge-dropped {
+      background: rgba(220, 53, 69, 0.12);
+      color: #ff6b6b;
+      border: 1px solid rgba(220, 53, 69, 0.25);
+    }
+
+    .status-badge {
+      border-radius: 50px;
+      padding: 5px 14px;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+      white-space: nowrap;
+    }
+
+    .cat-badge {
+      background: rgba(108, 99, 255, 0.15);
+      color: #a29bfe;
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      border: 1px solid rgba(108, 99, 255, 0.2);
+      white-space: nowrap;
+    }
+
+    .ep-cell {
+      min-width: 120px;
+    }
+
+    .ep-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 50px;
+      padding: 5px 14px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #ccc;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .ep-pill.clickable {
+      cursor: pointer;
+    }
+
+    .ep-pill.clickable:hover {
+      border-color: rgba(108, 99, 255, 0.4);
+      background: rgba(108, 99, 255, 0.08);
+    }
+
+    .ep-pill.plan-mode {
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .ep-pill.plan-mode:hover {
+      border-color: rgba(255, 193, 7, 0.4);
+      background: rgba(255, 193, 7, 0.08);
+    }
+
+    .ep-pill.ep-done {
+      color: #6fcf97;
+      border-color: rgba(40, 167, 69, 0.25);
+      background: rgba(40, 167, 69, 0.08);
+    }
+
+    .ep-pill.ep-done i {
+      color: #6fcf97;
+    }
+
+    .ep-pill.ep-progress {
+      color: #ffc107;
+      border-color: rgba(255, 193, 7, 0.25);
+      background: rgba(255, 193, 7, 0.08);
+    }
+
+    .ep-mini-bar {
+      display: inline-block;
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+
+    .ep-mini-fill {
+      display: block;
+      height: 100%;
+      border-radius: 2px;
+      transition: width .7s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .stars {
+      color: #ffc107;
+      font-size: .85rem;
+      letter-spacing: 1px;
+    }
+
+    .notes-cell {
+      color: #777;
+      font-size: .82rem;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .action-wrap {
+      display: flex;
+      gap: 6px;
+    }
+
+    .poster-img {
+      width: 40px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .poster-img:hover {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+
+    .poster-placeholder {
+      width: 40px;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .preview-img {
+      max-width: 100px;
+      max-height: 140px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .image-modal-container {
+      position: relative;
+      text-align: center;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+    }
+
+    .image-modal-img {
+      max-width: 100%;
+      max-height: 70vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+      cursor: zoom-in;
+    }
+
+    .image-modal-img.zoomed {
+      transform: scale(1.5);
+      cursor: zoom-out;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1060;
+    }
+
+    .zoom-btn {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+    }
+
+    .zoom-btn:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+      .image-modal-img {
+        max-height: 50vh;
+      }
+
+      .zoom-btn {
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    .swipe-hint {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .swipe-hint {
+        display: block;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .swipe-hint {
+        display: none;
+      }
+    }
+
+    .pagination-container {
+      background: rgba(255, 255, 255, 0.03);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .pagination-info {
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-page {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: #e0e0e0;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .btn-page:hover:not(:disabled) {
+      background: rgba(108, 99, 255, 0.2);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-page:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .page-number {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .page-number:hover {
+      background: rgba(108, 99, 255, 0.2);
+      border-color: var(--primary);
+    }
+
+    .page-number.active-page {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid rgba(108, 99, 255, 0.2);
+      border-radius: 16px;
+      color: #e0e0e0;
+    }
+
+    .btn-add {
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      color: #fff;
+      transition: all .3s;
+    }
+
+    .btn-add:hover {
+      background: #5a52d5;
+      box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 6px 11px;
+      color: #aaa;
+      transition: all .2s;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(108, 99, 255, 0.08);
+    }
+
+    .btn-icon.del:hover {
+      border-color: #e94560;
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.08);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #555;
+    }
+
+    .ep-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      transition: all .2s;
+      cursor: pointer;
+    }
+
+    .ep-item:hover {
+      border-color: rgba(108, 99, 255, 0.3);
+      background: rgba(108, 99, 255, 0.05);
+    }
+
+    .ep-item.disabled-item {
+      cursor: not-allowed;
+      opacity: 0.5;
+      filter: grayscale(0.2);
+    }
+
+    .ep-item.watched {
+      background: rgba(40, 167, 69, 0.08);
+      border-color: rgba(40, 167, 69, 0.25);
+    }
+
+    .ep-item.watched .ep-label {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .ep-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ep-item.watched .ep-check {
+      background: #6fcf97;
+      border-color: #6fcf97;
+      color: #0f0f1a;
+    }
+
+    .ep-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #6fcf97);
+      border-radius: 4px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .warning-alert {
+      background: rgba(255, 193, 7, 0.15);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .auto-complete-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease;
+      cursor: pointer;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-<nav class="navbar navbar-expand-lg sticky-top">
-  <div class="container-fluid px-4">
-    <a class="navbar-brand fw-bold" href="/"><i class="bi bi-play-circle-fill me-2" style="color:var(--primary)"></i><span class="text-white">WatchList</span></a>
-    <div class="ms-auto d-flex align-items-center gap-3">
-      <span class="text-muted small d-none d-md-block"><i class="bi bi-person-circle me-1"></i>{{ username }}</span>
-      <a href="/logout" class="btn btn-icon btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
-    </div>
-  </div>
-</nav>
-
-<div class="container-fluid px-4 py-4">
-
-  <!-- STATS -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-white" id="statTotal">0</div><div class="label"><i class="bi bi-collection me-1"></i>Total</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-warning" id="statWatching">0</div><div class="label"><i class="bi bi-play-circle me-1"></i>Watching</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-success" id="statCompleted">0</div><div class="label"><i class="bi bi-check-circle me-1"></i>Completed</div></div></div>
-    <div class="col-6 col-md-3"><div class="stat-card"><div class="number text-info" id="statPlan">0</div><div class="label"><i class="bi bi-bookmark me-1"></i>Plan to Watch</div></div></div>
-  </div>
-
-  <!-- FILTER BAR -->
-  <div class="filter-bar mb-4">
-    <div class="row g-2 align-items-center">
-      <div class="col-md-4">
-        <div class="input-group">
-          <span class="input-group-text" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#888;border-radius:10px 0 0 10px;"><i class="bi bi-search"></i></span>
-          <input type="text" id="searchInput" class="form-control" placeholder="Search title..." style="border-radius:0 10px 10px 0;"/>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <select id="filterCategory" class="form-select">
-          <option value="">All Categories</option>
-          <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select id="filterStatus" class="form-select">
-          <option value="">All Status</option>
-          <option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-add w-100" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg me-1"></i>Add</button>
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand fw-bold" href="/"><i class="bi bi-play-circle-fill me-2"
+          style="color:var(--primary)"></i><span class="text-white">WatchList</span></a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="text-muted small d-none d-md-block"><i class="bi bi-person-circle me-1"></i>{{ username }}</span>
+        <a href="/logout" class="btn btn-icon btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
       </div>
     </div>
-  </div>
+  </nav>
 
-  <!-- TABLE -->
-  <div class="table-card">
-    <div class="table-responsive">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Title</th>
-            <th>Category</th>
-            <th>Status</th>
-            <th>Episodes</th>
-            <th>Rating</th>
-            <th>Notes</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="watchlistBody">
-          <tr><td colspan="8"><div class="empty-state"><i class="bi bi-collection-play d-block"></i><p>Loading your watchlist...</p></div></td></tr>
-        </tbody>
-      </table>
+  <div class="container-fluid px-4 py-4">
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number text-white" id="statTotal">0</div>
+          <div class="label"><i class="bi bi-collection me-1"></i>Total</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number text-warning" id="statWatching">0</div>
+          <div class="label"><i class="bi bi-play-circle me-1"></i>Watching</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number text-success" id="statCompleted">0</div>
+          <div class="label"><i class="bi bi-check-circle me-1"></i>Completed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number text-info" id="statPlan">0</div>
+          <div class="label"><i class="bi bi-bookmark me-1"></i>Plan to Watch</div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- ADD MODAL -->
-<div class="modal fade" id="addModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2" style="color:var(--primary)"></i>Add to Watchlist</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="filter-bar mb-4">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <div class="input-group"><span class="input-group-text"
+              style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#888;border-radius:10px 0 0 10px;"><i
+                class="bi bi-search"></i></span><input type="text" id="searchInput" class="form-control"
+              placeholder="Search title..." style="border-radius:0 10px 10px 0;" /></div>
+        </div>
+        <div class="col-md-3"><select id="filterCategory" class="form-select">
+            <option value="">All Categories</option>
+            <option>Movie</option>
+            <option>TV Series</option>
+            <option>Anime</option>
+            <option>Manga</option>
+            <option>Game</option>
+          </select></div>
+        <div class="col-md-3"><select id="filterStatus" class="form-select">
+            <option value="">All Status</option>
+            <option>Plan to Watch</option>
+            <option>Watching</option>
+            <option>Completed</option>
+            <option>Dropped</option>
+          </select></div>
+        <div class="col-md-2"><button class="btn btn-add w-100" data-bs-toggle="modal" data-bs-target="#addModal"><i
+              class="bi bi-plus-lg me-1"></i>Add</button></div>
       </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label text-muted small">Title *</label>
-          <input type="text" id="addTitle" class="form-control" placeholder="e.g. Attack on Titan"/>
-        </div>
-        <div class="row g-3 mb-3">
-          <div class="col-6">
-            <label class="form-label text-muted small">Category</label>
-            <select id="addCategory" class="form-select" onchange="toggleAddFields()">
-              <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <label class="form-label text-muted small">Status</label>
-            <select id="addStatus" class="form-select" onchange="toggleAddFields()">
-              <option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option>
-            </select>
-          </div>
-        </div>
-        <!-- Episodes field (Watching only) -->
-        <div class="mb-3 ep-row" id="addEpRow" style="display:none">
-          <label class="form-label text-muted small"><i class="bi bi-collection-play me-1"></i>Total Episodes</label>
-          <input type="number" id="addTotalEp" class="form-control" min="1" max="9999" placeholder="e.g. 24"/>
-        </div>
-        <!-- Rating field (hidden for Plan to Watch) -->
-        <div class="mb-3 rating-row" id="addRatingRow">
-          <label class="form-label text-muted small">Rating (0–10)</label>
-          <input type="number" id="addRating" class="form-control" min="0" max="10" value="0"/>
-        </div>
-        <div class="mb-1">
-          <label class="form-label text-muted small">Notes</label>
-          <textarea id="addNotes" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
-        </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title & Image</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Episodes</th>
+              <th>Rating</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="watchlistBody">
+            <tr>
+              <td colspan="8">
+                <div class="empty-state"><i class="bi bi-collection-play d-block"></i>
+                  <p>Loading...</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-add" onclick="addItem()"><i class="bi bi-plus-lg me-1"></i>Add Item</button>
+      <div class="pagination-container">
+        <div class="pagination-info" id="paginationInfo"></div>
+        <div class="pagination-buttons"><button class="btn-page" id="prevPageBtn" disabled>‹ Previous</button>
+          <div class="page-numbers" id="pageNumbers"></div><button class="btn-page" id="nextPageBtn" disabled>Next
+            ›</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- EDIT MODAL -->
-<div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2" style="color:var(--primary)"></i>Edit Item</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="editId"/>
-        <div class="mb-3">
-          <label class="form-label text-muted small">Title *</label>
-          <input type="text" id="editTitle" class="form-control"/>
+  <!-- Modals -->
+  <div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-image me-2" style="color:var(--primary)"></i>Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="row g-3 mb-3">
-          <div class="col-6">
-            <label class="form-label text-muted small">Category</label>
-            <select id="editCategory" class="form-select" onchange="toggleEditFields()">
-              <option>Movie</option><option>TV Series</option><option>Anime</option><option>Manga</option><option>Game</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <label class="form-label text-muted small">Status</label>
-            <select id="editStatus" class="form-select" onchange="toggleEditFields()">
-              <option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option>
-            </select>
+        <div class="modal-body p-0">
+          <div class="image-modal-container"><img id="imageModalImg" class="image-modal-img" src="">
+            <div class="image-title" id="imageModalCaption"></div>
+            <div class="swipe-hint"><i class="bi bi-arrows-angle-expand"></i> Tap to zoom</div>
+            <div class="zoom-controls">
+              <div class="zoom-btn" id="zoomOutBtn"><i class="bi bi-dash-lg"></i></div>
+              <div class="zoom-btn" id="resetZoomBtn"><i class="bi bi-arrow-repeat"></i></div>
+              <div class="zoom-btn" id="zoomInBtn"><i class="bi bi-plus-lg"></i></div>
+            </div>
           </div>
         </div>
-        <div class="mb-3 ep-row" id="editEpRow" style="display:none">
-          <label class="form-label text-muted small"><i class="bi bi-collection-play me-1"></i>Total Episodes</label>
-          <input type="number" id="editTotalEp" class="form-control" min="1" max="9999" placeholder="e.g. 24"/>
-          <div class="text-warning small mt-1"><i class="bi bi-exclamation-triangle me-1"></i>Changing total will reset episode progress.</div>
-        </div>
-        <div class="mb-3 rating-row" id="editRatingRow">
-          <label class="form-label text-muted small">Rating (0–10)</label>
-          <input type="number" id="editRating" class="form-control" min="0" max="10"/>
-        </div>
-        <div class="mb-1">
-          <label class="form-label text-muted small">Notes</label>
-          <textarea id="editNotes" class="form-control" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-add" onclick="saveEdit()"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+        <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- EPISODES MODAL -->
-<div class="modal fade" id="epModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h5 class="modal-title fw-bold" id="epModalTitle"><i class="bi bi-collection-play me-2" style="color:#ffc107"></i>Episodes</h5>
-          <div class="text-muted small mt-1" id="epModalProgress"></div>
+  <div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2" style="color:var(--primary)"></i>Add to
+            Watchlist</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="ep-progress mb-3"><div class="ep-progress-bar" id="epProgressBar" style="width:0%"></div></div>
-        <div id="epList"></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label text-muted small">Title *</label><input type="text" id="addTitle"
+              class="form-control" placeholder="e.g. Attack on Titan" /></div>
+          <div class="row g-3 mb-3">
+            <div class="col-6"><label class="form-label text-muted small">Category</label><select id="addCategory"
+                class="form-select" onchange="toggleAddFields()">
+                <option>Movie</option>
+                <option>TV Series</option>
+                <option>Anime</option>
+                <option>Manga</option>
+                <option>Game</option>
+              </select></div>
+            <div class="col-6"><label class="form-label text-muted small">Status</label><select id="addStatus"
+                class="form-select" onchange="toggleAddFields()">
+                <option>Plan to Watch</option>
+                <option>Watching</option>
+                <option>Completed</option>
+                <option>Dropped</option>
+              </select></div>
+          </div>
+          <div class="mb-3 ep-row" id="addEpRow" style="display:none"><label class="form-label text-muted small"><i
+                class="bi bi-collection-play me-1"></i>Total Episodes/Chapters</label><input type="number"
+              id="addTotalEp" class="form-control" min="1" max="9999" placeholder="e.g. 24" /></div>
+          <div class="mb-3"><label class="form-label text-muted small"><i class="bi bi-cloud-upload me-1"></i>Upload
+              Image (optional)</label><input type="file" id="addImage" class="form-control"
+              accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" /><small class="text-muted">Max
+              5MB</small></div>
+          <div id="addImagePreview" class="mb-3" style="display:none; text-align:center;"><img id="addPreviewImg"
+              class="preview-img" src=""></div>
+          <div class="mb-3 rating-row" id="addRatingRow"><label class="form-label text-muted small">Rating
+              (0–10)</label><input type="number" id="addRating" class="form-control" min="0" max="10" value="0" /></div>
+          <div class="mb-1"><label class="form-label text-muted small">Notes</label><textarea id="addNotes"
+              class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary btn-sm"
+            data-bs-dismiss="modal">Cancel</button><button class="btn btn-add" onclick="addItem()"><i
+              class="bi bi-plus-lg me-1"></i>Add Item</button></div>
       </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const addModal = new bootstrap.Modal(document.getElementById('addModal'));
-  const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-  const epModal = new bootstrap.Modal(document.getElementById('epModal'));
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2" style="color:var(--primary)"></i>Edit Item
+          </h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body"><input type="hidden" id="editId" />
+          <div class="mb-3"><label class="form-label text-muted small">Title *</label><input type="text" id="editTitle"
+              class="form-control" /></div>
+          <div class="row g-3 mb-3">
+            <div class="col-6"><select id="editCategory" class="form-select" onchange="toggleEditFields()">
+                <option>Movie</option>
+                <option>TV Series</option>
+                <option>Anime</option>
+                <option>Manga</option>
+                <option>Game</option>
+              </select></div>
+            <div class="col-6"><select id="editStatus" class="form-select" onchange="toggleEditFields()">
+                <option>Plan to Watch</option>
+                <option>Watching</option>
+                <option>Completed</option>
+                <option>Dropped</option>
+              </select></div>
+          </div>
+          <div class="mb-3 ep-row" id="editEpRow" style="display:none"><label class="form-label text-muted small">Total
+              Episodes/Chapters</label><input type="number" id="editTotalEp" class="form-control" min="1" />
+            <div class="text-warning small mt-1"><i class="bi bi-exclamation-triangle me-1"></i>Changing total resets
+              progress.</div>
+          </div>
+          <div class="mb-3"><label class="form-label text-muted small">Upload New Image (optional)</label><input
+              type="file" id="editImage" class="form-control" accept="image/*" /></div>
+          <div id="editImagePreview" class="mb-3" style="display:none; text-align:center;"><img id="editPreviewImg"
+              class="preview-img" src=""></div>
+          <div class="mb-3 rating-row" id="editRatingRow"><label class="form-label text-muted small">Rating
+              (0–10)</label><input type="number" id="editRating" class="form-control" min="0" max="10" /></div>
+          <div class="mb-1"><textarea id="editNotes" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary btn-sm"
+            data-bs-dismiss="modal">Cancel</button><button class="btn btn-add" onclick="saveEdit()"><i
+              class="bi bi-check-lg me-1"></i>Save Changes</button></div>
+      </div>
+    </div>
+  </div>
 
-  // --- Field visibility toggles ---
-  function toggleAddFields() {
-    const s = document.getElementById('addStatus').value;
-    const cat = document.getElementById('addCategory').value;
-    document.getElementById('addRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
-    const noEp = cat === 'Movie';
-    document.getElementById('addEpRow').style.display = noEp ? 'none' : '';
-    document.getElementById('addEpRow').querySelector('label').innerHTML =
-      cat === 'Manga'
-        ? '<i class="bi bi-book me-1"></i>Total Chapters'
-        : '<i class="bi bi-collection-play me-1"></i>Total Episodes';
-    document.getElementById('addTotalEp').placeholder = cat === 'Manga' ? 'e.g. 100' : 'e.g. 24';
-  }
-  function toggleEditFields() {
-    const s = document.getElementById('editStatus').value;
-    const cat = document.getElementById('editCategory').value;
-    document.getElementById('editRatingRow').style.display = s === 'Plan to Watch' ? 'none' : '';
-    const noEp = cat === 'Movie';
-    document.getElementById('editEpRow').style.display = noEp ? 'none' : '';
-    document.getElementById('editEpRow').querySelector('label').innerHTML =
-      cat === 'Manga'
-        ? '<i class="bi bi-book me-1"></i>Total Chapters'
-        : '<i class="bi bi-collection-play me-1"></i>Total Episodes';
-    document.getElementById('editTotalEp').placeholder = cat === 'Manga' ? 'e.g. 100' : 'e.g. 24';
-  }
-  // init on load
-  toggleAddFields();
+  <div class="modal fade" id="epModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title fw-bold" id="epModalTitle"></h5>
+            <div class="text-muted small mt-1" id="epModalProgress"></div>
+          </div><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="warningContainer"></div>
+          <div class="ep-progress mb-3">
+            <div class="ep-progress-bar" id="epProgressBar" style="width:0%"></div>
+          </div>
+          <div id="epList"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button></div>
+      </div>
+    </div>
+  </div>
 
-  // --- Helpers ---
-  function statusBadge(s) {
-    const map = { 'Watching': 'badge-watching', 'Completed': 'badge-completed', 'Plan to Watch': 'badge-plan', 'Dropped': 'badge-dropped' };
-    return `<span class="status-badge ${map[s] || 'badge-plan'}">${s}</span>`;
-  }
-  function stars(r) {
-    if (!r) return '<span class="text-muted small">—</span>';
-    return `<span class="stars">${'★'.repeat(Math.round(r/2))}${'☆'.repeat(5-Math.round(r/2))}</span> <small class="text-muted">${r}/10</small>`;
-  }
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentPage = 1, itemsPerPage = 10, allItems = [], filteredItems = [], currentEpItemId = null, isPlanMode = false;
+    const addModalEl = new bootstrap.Modal(document.getElementById('addModal')), editModal = new bootstrap.Modal(document.getElementById('editModal')), epModal = new bootstrap.Modal(document.getElementById('epModal')), imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    let currentZoom = 1;
+    function updateZoomImg() { const img = document.getElementById('imageModalImg'); if (img) { img.style.transform = `scale(${currentZoom})`; img.style.cursor = currentZoom > 1 ? 'zoom-out' : 'zoom-in'; } }
+    function zoomIn() { if (currentZoom < 3) { currentZoom = Math.min(currentZoom + 0.3, 3); updateZoomImg(); } }
+    function zoomOut() { if (currentZoom > 0.5) { currentZoom = Math.max(currentZoom - 0.3, 0.5); updateZoomImg(); } }
+    function resetZoom() { currentZoom = 1; updateZoomImg(); }
+    function openImageModal(url, title) { if (!url) return; currentZoom = 1; updateZoomImg(); document.getElementById('imageModalImg').src = `/static/uploads/${escapeHtml(url)}`; document.getElementById('imageModalCaption').innerText = title; imageModal.show(); }
 
-  // --- Stats ---
-  async function loadStats() {
-    const d = await fetch('/api/stats').then(r => r.json());
-    document.getElementById('statTotal').textContent = d.total;
-    document.getElementById('statWatching').textContent = d.watching;
-    document.getElementById('statCompleted').textContent = d.completed;
-    document.getElementById('statPlan').textContent = d.plan;
-  }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+    function statusBadge(s) { const map = { 'Watching': 'badge-watching', 'Completed': 'badge-completed', 'Plan to Watch': 'badge-plan', 'Dropped': 'badge-dropped' }; return `<span class="status-badge ${map[s] || 'badge-plan'}">${s}</span>`; }
+    function stars(r) { if (!r) return '<span class="text-muted small">—</span>'; return `<span class="stars">${'★'.repeat(Math.round(r / 2))}${'☆'.repeat(5 - Math.round(r / 2))}</span> <small class="text-muted">${r}/10</small>`; }
 
-  // --- Watchlist ---
-  async function loadList() {
-    const params = new URLSearchParams({
-      search: document.getElementById('searchInput').value,
-      category: document.getElementById('filterCategory').value,
-      status: document.getElementById('filterStatus').value
-    });
-    const items = await fetch('/api/watchlist?' + params).then(r => r.json());
-    const tbody = document.getElementById('watchlistBody');
-    if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-collection-play d-block"></i><p>No items found. Add something to watch!</p></div></td></tr>`;
-      return;
+    async function loadStats() { const d = await fetch('/api/stats').then(r => r.json()); document.getElementById('statTotal').innerText = d.total; document.getElementById('statWatching').innerText = d.watching; document.getElementById('statCompleted').innerText = d.completed; document.getElementById('statPlan').innerText = d.plan; }
+
+    async function loadAndFilterItems() { const params = new URLSearchParams({ search: document.getElementById('searchInput').value, category: document.getElementById('filterCategory').value, status: document.getElementById('filterStatus').value }); allItems = await fetch('/api/watchlist?' + params).then(r => r.json()); filteredItems = [...allItems]; currentPage = 1; renderTable(); updatePagination(); }
+
+    function renderTable() {
+      const tbody = document.getElementById('watchlistBody'), start = (currentPage - 1) * itemsPerPage, end = start + itemsPerPage, pageItems = filteredItems.slice(start, end);
+      if (!pageItems.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-collection-play d-block"></i><p>No items found.</p></div></td></tr>`; return; }
+      tbody.innerHTML = pageItems.map((item, idx) => {
+        const globalIdx = start + idx; let imgHtml = item.image_url ? `<img src="/static/uploads/${escapeHtml(item.image_url)}" class="poster-img" onclick="event.stopPropagation(); openImageModal('${escapeHtml(item.image_url)}','${escapeHtml(item.title)}')" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'poster-placeholder\\' onclick=\\'event.stopPropagation();\\'><i class=\\'bi bi-image text-muted\\'></i></div>';">` : `<div class="poster-placeholder" onclick="event.stopPropagation();"><i class="bi bi-image text-muted"></i></div>`;
+        const epUnit = item.category === 'Manga' ? 'ch' : 'eps'; let epCell = '';
+        if (item.total_episodes > 0 && item.category !== 'Movie') { const pct = Math.round(((item.watched_count || 0) / item.total_episodes) * 100); const epClass = pct === 100 ? 'ep-done' : pct > 0 ? 'ep-progress' : 'ep-none'; const icon = pct === 100 ? 'bi-check-circle-fill' : 'bi-play-circle-fill'; const barColor = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444'; epCell = `<span class="ep-pill clickable ${epClass}" onclick="openEpisodes(${item.id},'${item.status}')"><i class="bi ${icon}"></i>${item.watched_count || 0}/${item.total_episodes} ${epUnit}<span class="ep-mini-bar"><span class="ep-mini-fill" data-pct="${pct}" style="width:0%;background-color:${barColor}"></span></span></span>`; } else epCell = `<span style="color:#444">—</span>`;
+        return `<tr><td class="row-num">${globalIdx + 1}</td><td><div class="d-flex align-items-center gap-2">${imgHtml}<div class="title-cell">${escapeHtml(item.title)}</div></div></td><td><span class="cat-badge">${item.category}</span></td><td>${statusBadge(item.status)}</td><td class="ep-cell">${epCell}</td><td>${item.status === 'Plan to Watch' ? '<span style="color:#444">—</span>' : stars(item.rating)}</td><td class="notes-cell" title="${escapeHtml(item.notes || '').replace(/"/g, '&quot;')}">${escapeHtml(item.notes || '—')}</td><td><div class="action-wrap"><button class="btn btn-icon btn-sm" onclick='openEdit(${JSON.stringify(item).replace(/'/g, "&#39;")})'><i class="bi bi-pencil"></i></button><button class="btn btn-icon del btn-sm" onclick="deleteItem(${item.id})"><i class="bi bi-trash"></i></button></div></td></tr>`;
+      }).join('');
+      requestAnimationFrame(() => { document.querySelectorAll('.ep-mini-fill').forEach(el => { el.style.width = el.dataset.pct + '%'; }); });
     }
-    tbody.innerHTML = items.map((item, i) => {
-      const pct = item.total_episodes > 0 ? Math.round((item.watched_count||0) / item.total_episodes * 100) : 0;
-      const epClass = pct === 100 ? 'ep-done' : pct > 0 ? 'ep-progress' : 'ep-none';
-      const epIcon = pct === 100 ? 'bi-check-circle-fill' : 'bi-play-circle-fill';
-      const barBg = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444';
-      const epUnit = item.category === 'Manga' ? 'ch' : 'eps';
-      const epCell = item.total_episodes > 0 && item.category !== 'Movie'
-        ? `<span class="ep-pill ${epClass}" onclick="openEpisodes(${item.id})">
-             <i class="bi ${epIcon}" style="font-size:.8rem"></i>
-             ${item.watched_count||0}/${item.total_episodes} ${epUnit}
-             <span class="ep-mini-bar"><span class="ep-mini-fill" data-pct="${pct}" style="width:0%;background-color:${barBg}"></span></span>
-           </span>`
-        : `<span style="color:#444">—</span>`;
-      const ratingCell = item.status === 'Plan to Watch'
-        ? `<span style="color:#444">—</span>`
-        : stars(item.rating);
-      return `<tr>
-        <td class="row-num">${i+1}</td>
-        <td class="title-cell">${item.title}</td>
-        <td><span class="cat-badge">${item.category}</span></td>
-        <td>${statusBadge(item.status)}</td>
-        <td>${epCell}</td>
-        <td>${ratingCell}</td>
-        <td class="notes-cell" title="${(item.notes||'').replace(/"/g,'&quot;')}">${item.notes||'—'}</td>
-        <td>
-          <div class="action-wrap">
-            <button class="btn btn-icon btn-sm" onclick='openEdit(${JSON.stringify(item)})' title="Edit"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-icon del btn-sm" onclick="deleteItem(${item.id})" title="Delete"><i class="bi bi-trash"></i></button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
-    // animate mini bars
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      document.querySelectorAll('.ep-mini-fill').forEach(el => {
-        el.style.width = el.dataset.pct + '%';
-        const pct = +el.dataset.pct;
-        el.style.backgroundColor = pct === 100 ? '#6fcf97' : pct > 0 ? '#ffc107' : '#444';
-      });
-    }));
-  }
 
-  // --- Add ---
-  async function addItem() {
-    const title = document.getElementById('addTitle').value.trim();
-    if (!title) return alert('Please enter a title.');
-    const status = document.getElementById('addStatus').value;
-    await fetch('/api/watchlist', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        title, category: document.getElementById('addCategory').value,
-        status, rating: status !== 'Plan to Watch' ? +document.getElementById('addRating').value : 0,
-        total_episodes: +document.getElementById('addTotalEp').value || 0,
-        notes: document.getElementById('addNotes').value
-      })
-    });
-    addModal.hide();
-    document.getElementById('addTitle').value = '';
-    document.getElementById('addNotes').value = '';
-    document.getElementById('addRating').value = 0;
-    document.getElementById('addTotalEp').value = '';
-    loadList(); loadStats();
-  }
+    function updatePagination() { const total = filteredItems.length, pages = Math.ceil(total / itemsPerPage), start = total === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1, end = Math.min(currentPage * itemsPerPage, total); document.getElementById('paginationInfo').innerText = `Showing ${start} to ${end} of ${total} items`; document.getElementById('prevPageBtn').disabled = currentPage === 1; document.getElementById('nextPageBtn').disabled = currentPage === pages || pages === 0; const container = document.getElementById('pageNumbers'); container.innerHTML = ''; if (pages <= 7) { for (let i = 1; i <= pages; i++) container.appendChild(pageBtn(i)); } else { container.appendChild(pageBtn(1)); if (currentPage > 3) container.appendChild(dotsSpan()); let s = Math.max(2, currentPage - 1), e = Math.min(pages - 1, currentPage + 1); if (currentPage <= 3) { s = 2; e = 4; } if (currentPage >= pages - 2) { s = pages - 3; e = pages - 1; } for (let i = s; i <= e; i++) container.appendChild(pageBtn(i)); if (currentPage < pages - 2) container.appendChild(dotsSpan()); container.appendChild(pageBtn(pages)); } }
+    function pageBtn(p) { const btn = document.createElement('div'); btn.className = 'page-number' + (p === currentPage ? ' active-page' : ''); btn.innerText = p; btn.onclick = () => { currentPage = p; renderTable(); updatePagination(); }; return btn; }
+    function dotsSpan() { const span = document.createElement('span'); span.className = 'page-dots'; span.innerText = '...'; return span; }
+    function prevPage() { if (currentPage > 1) { currentPage--; renderTable(); updatePagination(); } }
+    function nextPage() { const pages = Math.ceil(filteredItems.length / itemsPerPage); if (currentPage < pages) { currentPage++; renderTable(); updatePagination(); } }
 
-  // --- Edit ---
-  function openEdit(item) {
-    document.getElementById('editId').value = item.id;
-    document.getElementById('editTitle').value = item.title;
-    document.getElementById('editCategory').value = item.category;
-    document.getElementById('editStatus').value = item.status;
-    document.getElementById('editRating').value = item.rating;
-    document.getElementById('editNotes').value = item.notes || '';
-    document.getElementById('editTotalEp').value = item.total_episodes || '';
-    toggleEditFields();
-    editModal.show();
-  }
-  async function saveEdit() {
-    const id = document.getElementById('editId').value;
-    const title = document.getElementById('editTitle').value.trim();
-    if (!title) return alert('Title cannot be empty.');
-    const status = document.getElementById('editStatus').value;
-    await fetch(`/api/watchlist/${id}`, {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        title, category: document.getElementById('editCategory').value,
-        status, rating: status !== 'Plan to Watch' ? +document.getElementById('editRating').value : 0,
-        total_episodes: +document.getElementById('editTotalEp').value || 0,
-        notes: document.getElementById('editNotes').value
-      })
-    });
-    editModal.hide();
-    loadList(); loadStats();
-  }
+    async function addItem() {
+      const title = document.getElementById('addTitle').value.trim(); if (!title) return alert('Enter title');
+      const formData = new FormData(); formData.append('title', title); formData.append('category', document.getElementById('addCategory').value); const status = document.getElementById('addStatus').value; formData.append('status', status); formData.append('rating', document.getElementById('addRating').value); formData.append('total_episodes', document.getElementById('addTotalEp').value || 0); formData.append('notes', document.getElementById('addNotes').value); const imgFile = document.getElementById('addImage').files[0]; if (imgFile) formData.append('image', imgFile);
+      const res = await fetch('/api/watchlist', { method: 'POST', body: formData }); if (res.ok) {
+        addModalEl.hide(); document.getElementById('addTitle').value = ''; document.getElementById('addNotes').value = ''; document.getElementById('addRating').value = 0; document.getElementById('addTotalEp').value = ''; document.getElementById('addImage').value = ''; document.getElementById('addImagePreview').style.display = 'none'; await loadAndFilterItems(); await loadStats();
+        const newItem = await res.json();
+        if (status === 'Completed' && newItem.id && (newItem.category !== 'Movie' && newItem.total_episodes > 0)) {
+          const epRes = await fetch(`/api/episodes/${newItem.id}`); const epData = await epRes.json(); if (epData.episodes && epData.episodes.length) {
+            for (let ep of epData.episodes) { if (!ep.watched) await fetch(`/api/episodes/${ep.id}/toggle`, { method: 'POST' }); }
+            await loadAndFilterItems(); await loadStats();
+            showAutoCompleteToast(title);
+          }
+        }
+      } else alert('Failed to add');
+    }
 
-  // --- Delete ---
-  async function deleteItem(id) {
-    if (!confirm('Remove this item from your watchlist?')) return;
-    await fetch(`/api/watchlist/${id}`, { method: 'DELETE' });
-    loadList(); loadStats();
-  }
+    function showAutoCompleteToast(title) { const toast = document.createElement('div'); toast.className = 'auto-complete-toast'; toast.innerHTML = `<i class="bi bi-trophy-fill"></i><div><strong>🎉 Complete!</strong><br><small>"${escapeHtml(title)}" marked as Completed with all episodes watched</small></div><i class="bi bi-check-circle-fill"></i>`; toast.onclick = () => toast.remove(); document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000); }
 
-  // --- Episodes ---
-  let currentEpItemId = null;
-  async function openEpisodes(id) {
-    currentEpItemId = id;
-    const data = await fetch(`/api/episodes/${id}`).then(r => r.json());
-    const label = data.category === 'Manga' ? 'Chapters' : 'Episodes';
-    const icon = data.category === 'Manga' ? 'bi-book' : 'bi-collection-play';
-    document.getElementById('epModalTitle').innerHTML = `<i class="bi ${icon} me-2" style="color:#ffc107"></i>${data.title} — ${label}`;
-    renderEpisodes(data.episodes, data.category);
-    epModal.show();
-  }
-  function renderEpisodes(eps, category) {
-    const unit = category === 'Manga' ? 'Chapter' : 'Episode';
-    const watched = eps.filter(e => e.watched).length;
-    const total = eps.length;
-    const pct = total ? Math.round(watched / total * 100) : 0;
-    document.getElementById('epModalProgress').textContent = `${watched} / ${total} ${unit.toLowerCase()}s watched (${pct}%)`;
-    const bar = document.getElementById('epProgressBar');
-    bar.style.width = '0%';
-    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + '%'; }));
-    document.getElementById('epList').innerHTML = eps.map(ep => `
-      <div class="ep-item ${ep.watched ? 'watched' : ''}" onclick="toggleEp(${ep.id})">
-        <div class="ep-check">${ep.watched ? '<i class="bi bi-check-lg" style="font-size:.8rem"></i>' : ''}</div>
-        <span class="ep-label">${unit} ${ep.episode_number}</span>
-      </div>`).join('');
-  }
-  async function toggleEp(epId) {
-    await fetch(`/api/episodes/${epId}/toggle`, { method: 'POST' });
-    const data = await fetch(`/api/episodes/${currentEpItemId}`).then(r => r.json());
-    renderEpisodes(data.episodes, data.category);
-    loadList();
-  }
+    async function deleteItem(id) { if (confirm('Remove?')) { await fetch(`/api/watchlist/${id}`, { method: 'DELETE' }); await loadAndFilterItems(); await loadStats(); } }
 
-  ['searchInput','filterCategory','filterStatus'].forEach(id => {
-    document.getElementById(id).addEventListener('input', loadList);
-  });
+    function openEdit(item) { document.getElementById('editId').value = item.id; document.getElementById('editTitle').value = item.title; document.getElementById('editCategory').value = item.category; document.getElementById('editStatus').value = item.status; document.getElementById('editRating').value = item.rating; document.getElementById('editNotes').value = item.notes || ''; document.getElementById('editTotalEp').value = item.total_episodes || ''; if (item.image_url) { document.getElementById('editPreviewImg').src = `/static/uploads/${escapeHtml(item.image_url)}`; document.getElementById('editImagePreview').style.display = 'block'; } else document.getElementById('editImagePreview').style.display = 'none'; toggleEditFields(); editModal.show(); }
+    async function saveEdit() { const id = document.getElementById('editId').value; const title = document.getElementById('editTitle').value.trim(); if (!title) return alert('Title required'); const formData = new FormData(); formData.append('title', title); formData.append('category', document.getElementById('editCategory').value); formData.append('status', document.getElementById('editStatus').value); formData.append('rating', document.getElementById('editRating').value); formData.append('total_episodes', document.getElementById('editTotalEp').value || 0); formData.append('notes', document.getElementById('editNotes').value); const imgFile = document.getElementById('editImage').files[0]; if (imgFile) formData.append('image', imgFile); const res = await fetch(`/api/watchlist/${id}`, { method: 'PUT', body: formData }); if (res.ok) { editModal.hide(); await loadAndFilterItems(); await loadStats(); } else alert('Update failed'); }
 
-  loadList(); loadStats();
-</script>
+    async function openEpisodes(id, status) { currentEpItemId = id; isPlanMode = (status === 'Plan to Watch'); const data = await fetch(`/api/episodes/${id}`).then(r => r.json()); const label = data.category === 'Manga' ? 'Chapters' : 'Episodes'; const icon = data.category === 'Manga' ? 'bi-book' : 'bi-collection-play'; document.getElementById('epModalTitle').innerHTML = `<i class="bi ${icon} me-2" style="color:#ffc107"></i>${escapeHtml(data.title)} — ${label}`; document.getElementById('warningContainer').innerHTML = isPlanMode ? `<div class="warning-alert"><i class="bi bi-info-circle-fill"></i><div><strong>📌 Plan to Watch Mode</strong><br>Change status to "Watching" or "Completed" to track.</div><button class="btn btn-sm" style="background:rgba(255,193,7,0.2);border:1px solid #ffc107;color:#ffc107;" onclick="closeAndEditStatus()">Change Status</button></div>` : ''; renderEpisodes(data.episodes, data.category, data.title); epModal.show(); }
+    function renderEpisodes(eps, category, title) { const unit = category === 'Manga' ? 'Chapter' : 'Episode'; const watched = eps.filter(e => e.watched).length; const total = eps.length; const pct = total ? Math.round(watched / total * 100) : 0; document.getElementById('epModalProgress').innerText = `${watched} / ${total} ${unit.toLowerCase()}s watched (${pct}%)`; const bar = document.getElementById('epProgressBar'); bar.style.width = '0%'; requestAnimationFrame(() => { bar.style.width = pct + '%'; }); document.getElementById('epList').innerHTML = eps.map(ep => `<div class="ep-item ${ep.watched ? 'watched' : ''} ${isPlanMode ? 'disabled-item' : ''}" onclick="${isPlanMode ? '' : 'toggleEp(' + ep.id + ',\'' + escapeHtml(title) + '\')'}"><div class="ep-check">${ep.watched ? '<i class="bi bi-check-lg"></i>' : ''}</div><span class="ep-label">${unit} ${ep.episode_number}${ep.title ? ' - ' + escapeHtml(ep.title) : ''}</span></div>`).join(''); }
+    async function toggleEp(epId, title) { if (isPlanMode) return; await fetch(`/api/episodes/${epId}/toggle`, { method: 'POST' }); const data = await fetch(`/api/episodes/${currentEpItemId}`).then(r => r.json()); const eps = data.episodes; const total = eps.length, watched = eps.filter(e => e.watched).length; if (total > 0 && watched === total) { await updateItemStatus(currentEpItemId, 'Completed'); showAutoCompleteToast(title); await loadAndFilterItems(); await loadStats(); } renderEpisodes(eps, data.category, title); }
+    async function updateItemStatus(itemId, newStatus) { const items = await fetch('/api/watchlist').then(r => r.json()); const item = items.find(i => i.id === itemId); if (!item) return; await fetch(`/api/watchlist/${itemId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: item.title, category: item.category, status: newStatus, rating: item.rating || 0, total_episodes: item.total_episodes || 0, notes: item.notes || '', image_url: item.image_url || '' }) }); }
+    function closeAndEditStatus() { epModal.hide(); setTimeout(async () => { const items = await fetch('/api/watchlist').then(r => r.json()); const item = items.find(i => i.id === currentEpItemId); if (item) openEdit(item); }, 300); }
+    function toggleAddFields() { const s = document.getElementById('addStatus').value; const cat = document.getElementById('addCategory').value; document.getElementById('addRatingRow').style.display = s === 'Plan to Watch' ? 'none' : ''; const noEp = cat === 'Movie'; document.getElementById('addEpRow').style.display = noEp ? 'none' : ''; document.getElementById('addEpRow').querySelector('label').innerHTML = cat === 'Manga' ? '<i class="bi bi-book me-1"></i>Total Chapters' : '<i class="bi bi-collection-play me-1"></i>Total Episodes'; }
+    function toggleEditFields() { const s = document.getElementById('editStatus').value; const cat = document.getElementById('editCategory').value; document.getElementById('editRatingRow').style.display = s === 'Plan to Watch' ? 'none' : ''; const noEp = cat === 'Movie'; document.getElementById('editEpRow').style.display = noEp ? 'none' : ''; document.getElementById('editEpRow').querySelector('label').innerHTML = cat === 'Manga' ? '<i class="bi bi-book me-1"></i>Total Chapters' : '<i class="bi bi-collection-play me-1"></i>Total Episodes'; }
+
+    document.getElementById('addImage').addEventListener('change', function () { const f = this.files[0]; const preview = document.getElementById('addImagePreview'); const img = document.getElementById('addPreviewImg'); if (f) { const r = new FileReader(); r.onload = e => { img.src = e.target.result; preview.style.display = 'block'; }; r.readAsDataURL(f); } else preview.style.display = 'none'; });
+    document.getElementById('editImage').addEventListener('change', function () { const f = this.files[0]; const preview = document.getElementById('editImagePreview'); const img = document.getElementById('editPreviewImg'); if (f) { const r = new FileReader(); r.onload = e => { img.src = e.target.result; preview.style.display = 'block'; }; r.readAsDataURL(f); } });
+    document.getElementById('zoomInBtn')?.addEventListener('click', zoomIn); document.getElementById('zoomOutBtn')?.addEventListener('click', zoomOut); document.getElementById('resetZoomBtn')?.addEventListener('click', resetZoom);
+    document.getElementById('searchInput').addEventListener('input', () => loadAndFilterItems()); document.getElementById('filterCategory').addEventListener('change', () => loadAndFilterItems()); document.getElementById('filterStatus').addEventListener('change', () => loadAndFilterItems());
+    toggleAddFields(); loadAndFilterItems(); loadStats(); window.prevPage = prevPage; window.nextPage = nextPage; window.openEpisodes = openEpisodes; window.toggleEp = toggleEp; window.closeAndEditStatus = closeAndEditStatus; window.deleteItem = deleteItem; window.openEdit = openEdit; window.saveEdit = saveEdit; window.addItem = addItem; window.openImageModal = openImageModal;
+  </script>
 </body>
+
 </html>
