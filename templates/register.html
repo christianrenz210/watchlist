@@ -9,7 +9,7 @@
   <style>
     :root { --primary: #6c63ff; --dark: #0f0f1a; --card-bg: #1a1a2e; }
     body { background: var(--dark); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; min-height: 100vh; display: flex; align-items: center; }
-    .auth-card { background: var(--card-bg); border: 1px solid rgba(108,99,255,0.2); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .auth-card { background: var(--card-bg); border: 1px solid rgba(108,99,255,0.2); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
     .form-control { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 10px; padding: 12px 16px; }
     .form-control:focus { background: rgba(255,255,255,0.08); border-color: var(--primary); color: #fff; box-shadow: 0 0 0 3px rgba(108,99,255,0.2); }
     .form-control::placeholder { color: #666; }
@@ -44,8 +44,53 @@
       border-radius: 10px 0 0 10px;
     }
     
+    /* Password requirements styling */
+    .password-requirements {
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      font-size: 0.75rem;
+    }
+    
+    .requirement {
+      color: #888;
+      margin-bottom: 4px;
+      transition: all 0.2s ease;
+    }
+    
+    .requirement i {
+      margin-right: 6px;
+      font-size: 0.7rem;
+    }
+    
+    .requirement.valid {
+      color: #4caf50;
+    }
+    
+    .requirement.invalid {
+      color: #888;
+    }
+    
     .alert { border-radius: 12px; font-size: 0.9rem; }
     .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+    
+    .strength-bar {
+      height: 4px;
+      border-radius: 4px;
+      margin-top: 8px;
+      transition: all 0.3s ease;
+      background: #333;
+    }
+    
+    .strength-bar.weak { background: linear-gradient(90deg, #f44336 33%, #333 33%); width: 33%; }
+    .strength-bar.medium { background: linear-gradient(90deg, #ff9800 66%, #333 66%); width: 66%; }
+    .strength-bar.strong { background: linear-gradient(90deg, #4caf50 100%, #333 0%); width: 100%; }
+    
+    .strength-text { font-size: 0.7rem; margin-top: 4px; }
+    .strength-text.weak { color: #f44336; }
+    .strength-text.medium { color: #ff9800; }
+    .strength-text.strong { color: #4caf50; }
   </style>
 </head>
 <body>
@@ -71,28 +116,52 @@
         <label class="form-label">Username</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-person"></i></span>
-          <input type="text" name="username" class="form-control" placeholder="Choose a username" required minlength="3"/>
+          <input type="text" name="username" id="username" class="form-control" placeholder="Choose a username" required minlength="3"/>
         </div>
+        <small class="text-muted" style="font-size: 0.7rem;">Minimum 3 characters</small>
       </div>
       
       <div class="mb-3">
         <label class="form-label">Email Address</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-          <input type="email" name="email" class="form-control" placeholder="your@email.com" required/>
+          <input type="email" name="email" id="email" class="form-control" placeholder="your@email.com" required/>
         </div>
       </div>
       
-      <!-- PASSWORD FIELD WITH SHOW/HIDE -->
-      <div class="mb-3">
+      <!-- PASSWORD FIELD WITH SHOW/HIDE & REQUIREMENTS -->
+      <div class="mb-2">
         <label class="form-label">Password</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
-          <input type="password" name="password" id="password" class="form-control" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password"/>
+          <input type="password" name="password" id="password" class="form-control" placeholder="Create a strong password" required autocomplete="new-password"/>
           <button class="input-group-text password-toggle-btn" type="button" id="togglePasswordBtn" aria-label="Show or hide password">
             <i class="bi bi-eye-slash" id="passwordIcon"></i>
           </button>
         </div>
+        
+        <!-- Password Requirements Box -->
+        <div class="password-requirements" id="passwordRequirements">
+          <div class="requirement" id="reqLength">
+            <i class="bi bi-circle"></i> At least 8 characters
+          </div>
+          <div class="requirement" id="reqUppercase">
+            <i class="bi bi-circle"></i> At least 1 uppercase letter (A-Z)
+          </div>
+          <div class="requirement" id="reqLowercase">
+            <i class="bi bi-circle"></i> At least 1 lowercase letter (a-z)
+          </div>
+          <div class="requirement" id="reqNumber">
+            <i class="bi bi-circle"></i> At least 1 number (0-9)
+          </div>
+          <div class="requirement" id="reqSpecial">
+            <i class="bi bi-circle"></i> At least 1 special character (!@#$%^&*)
+          </div>
+        </div>
+        
+        <!-- Password Strength Indicator -->
+        <div class="strength-bar" id="strengthBar"></div>
+        <div class="strength-text" id="strengthText"></div>
       </div>
       
       <!-- CONFIRM PASSWORD FIELD WITH SHOW/HIDE -->
@@ -105,10 +174,12 @@
             <i class="bi bi-eye-slash" id="confirmIcon"></i>
           </button>
         </div>
-        <div id="matchError" class="text-danger small mt-1 d-none"><i class="bi bi-x-circle me-1"></i>Passwords do not match</div>
+        <div id="matchError" class="text-danger small mt-1 d-none">
+          <i class="bi bi-x-circle me-1"></i>Passwords do not match
+        </div>
       </div>
       
-      <button type="submit" class="btn btn-register"><i class="bi bi-person-plus me-2"></i>Create Account</button>
+      <button type="submit" class="btn btn-register" id="submitBtn"><i class="bi bi-person-plus me-2"></i>Create Account</button>
     </form>
 
     <p class="text-center mt-4 mb-0" style="color:#ccc">Already have an account? <a href="/login" style="color:var(--primary)">Login here</a></p>
@@ -120,7 +191,7 @@
 
 <script>
   (function() {
-    // ========== PASSWORD TOGGLE FUNCTION ==========
+    // ========== PASSWORD TOGGLE FUNCTION (maintains cursor position) ==========
     function createPasswordToggle(passwordInput, toggleBtn, toggleIcon) {
       if (!passwordInput || !toggleBtn || !toggleIcon) return;
       
@@ -186,27 +257,119 @@
       toggleBtn.style.cursor = 'pointer';
     }
     
-    // Initialize Password field toggle
+    // Initialize toggles for both password fields
     const passwordInput = document.getElementById('password');
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const passwordIcon = document.getElementById('passwordIcon');
     createPasswordToggle(passwordInput, togglePasswordBtn, passwordIcon);
     
-    // Initialize Confirm Password field toggle
     const confirmInput = document.getElementById('confirm');
     const toggleConfirmBtn = document.getElementById('toggleConfirmBtn');
     const confirmIcon = document.getElementById('confirmIcon');
     createPasswordToggle(confirmInput, toggleConfirmBtn, confirmIcon);
     
+    // ========== PASSWORD REQUIREMENTS VALIDATION ==========
+    function checkPasswordStrength(password) {
+      const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*]/.test(password)
+      };
+      
+      // Update UI for each requirement
+      updateRequirement('reqLength', requirements.length);
+      updateRequirement('reqUppercase', requirements.uppercase);
+      updateRequirement('reqLowercase', requirements.lowercase);
+      updateRequirement('reqNumber', requirements.number);
+      updateRequirement('reqSpecial', requirements.special);
+      
+      // Calculate strength
+      const strengthScore = Object.values(requirements).filter(Boolean).length;
+      
+      // Update strength bar and text
+      const strengthBar = document.getElementById('strengthBar');
+      const strengthText = document.getElementById('strengthText');
+      
+      if (password.length === 0) {
+        strengthBar.className = 'strength-bar';
+        strengthText.textContent = '';
+        strengthText.className = 'strength-text';
+        return false;
+      }
+      
+      if (strengthScore <= 2) {
+        strengthBar.className = 'strength-bar weak';
+        strengthText.textContent = '⚠️ Weak password';
+        strengthText.className = 'strength-text weak';
+      } else if (strengthScore <= 4) {
+        strengthBar.className = 'strength-bar medium';
+        strengthText.textContent = '⚡ Medium password';
+        strengthText.className = 'strength-text medium';
+      } else {
+        strengthBar.className = 'strength-bar strong';
+        strengthText.textContent = '✅ Strong password';
+        strengthText.className = 'strength-text strong';
+      }
+      
+      return strengthScore === 5; // Returns true if all requirements met
+    }
+    
+    function updateRequirement(elementId, isValid) {
+      const element = document.getElementById(elementId);
+      if (isValid) {
+        element.classList.add('valid');
+        element.classList.remove('invalid');
+        element.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + element.innerHTML.split('>').slice(1).join('>').replace('<i class="bi bi-circle"></i>', '');
+        // Fix icon properly
+        if (element.innerHTML.includes('bi-check-circle-fill')) {
+          // Already good
+        } else {
+          element.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + element.textContent.replace('✓', '').trim();
+        }
+      } else {
+        element.classList.remove('valid');
+        element.classList.add('invalid');
+        if (!element.innerHTML.includes('bi-circle')) {
+          const text = element.textContent.replace(/[✓✅✗✘]/g, '').trim();
+          element.innerHTML = '<i class="bi bi-circle"></i> ' + text;
+        }
+      }
+    }
+    
+    // Fix the initial requirement texts
+    function initializeRequirements() {
+      const reqs = ['reqLength', 'reqUppercase', 'reqLowercase', 'reqNumber', 'reqSpecial'];
+      reqs.forEach(req => {
+        const el = document.getElementById(req);
+        const text = el.textContent.replace(/[✓✅✗✘]/g, '').trim();
+        if (!el.innerHTML.includes('bi-circle')) {
+          el.innerHTML = '<i class="bi bi-circle"></i> ' + text;
+        }
+      });
+    }
+    initializeRequirements();
+    
+    // Real-time password validation
+    let allRequirementsMet = false;
+    
+    passwordInput.addEventListener('input', function() {
+      const password = this.value;
+      allRequirementsMet = checkPasswordStrength(password);
+      validatePasswordMatch(); // Re-check match when password changes
+    });
+    
     // ========== PASSWORD MATCH VALIDATION ==========
     const form = document.getElementById('registerForm');
     const matchErrorDiv = document.getElementById('matchError');
+    const submitBtn = document.getElementById('submitBtn');
     
     function validatePasswordMatch() {
       const pw = passwordInput.value;
       const cf = confirmInput.value;
       
-      if (pw !== cf && cf.length > 0) {
+      if (cf.length > 0 && pw !== cf) {
         matchErrorDiv.classList.remove('d-none');
         return false;
       } else {
@@ -215,12 +378,22 @@
       }
     }
     
-    // Real-time validation when typing
-    if (confirmInput) {
-      confirmInput.addEventListener('keyup', validatePasswordMatch);
-    }
-    if (passwordInput) {
-      passwordInput.addEventListener('keyup', validatePasswordMatch);
+    // Real-time validation when typing on confirm field
+    confirmInput.addEventListener('input', function() {
+      validatePasswordMatch();
+    });
+    
+    // Also check match when password changes (already called inside password input)
+    function checkAllValidations() {
+      const pw = passwordInput.value;
+      const cf = confirmInput.value;
+      const passwordsMatch = (pw === cf);
+      const requirementsValid = checkPasswordStrength(pw);
+      
+      if (pw.length > 0 && cf.length > 0 && passwordsMatch && requirementsValid) {
+        return true;
+      }
+      return false;
     }
     
     // Form submission validation
@@ -228,18 +401,36 @@
       form.addEventListener('submit', function(e) {
         const pw = passwordInput.value;
         const cf = confirmInput.value;
+        const requirementsValid = checkPasswordStrength(pw);
+        const passwordsMatch = (pw === cf);
         
-        if (pw !== cf) {
+        let errorMessage = '';
+        
+        if (!requirementsValid) {
+          errorMessage = 'Please meet all password requirements';
           e.preventDefault();
-          matchErrorDiv.classList.remove('d-none');
+          passwordInput.focus();
+        } else if (!passwordsMatch) {
+          errorMessage = 'Passwords do not match';
+          e.preventDefault();
           confirmInput.focus();
+        }
+        
+        if (errorMessage) {
+          matchErrorDiv.textContent = errorMessage;
+          matchErrorDiv.classList.remove('d-none');
+          setTimeout(() => {
+            if (matchErrorDiv.textContent === errorMessage) {
+              matchErrorDiv.classList.add('d-none');
+            }
+          }, 3000);
         } else {
           matchErrorDiv.classList.add('d-none');
         }
       });
     }
     
-    console.log("Register page ready - Password show/hide enabled for both fields!");
+    console.log("Register page ready - Password requirements + show/hide enabled!");
   })();
 </script>
 
