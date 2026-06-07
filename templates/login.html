@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,8 +16,40 @@
     .form-label { color: #aaa; font-size: .9rem; }
     .btn-login { background: var(--primary); border: none; border-radius: 10px; padding: 13px; font-weight: 600; font-size: 1rem; width: 100%; color: #fff; transition: all .3s; }
     .btn-login:hover { background: #5a52d5; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,0.4); color: #fff; }
-    .input-group-text { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; border-radius: 10px 0 0 10px; }
-    .input-group .form-control { border-radius: 0 10px 10px 0; }
+    .input-group-text { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; }
+    
+    .password-toggle-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-left: none;
+      cursor: pointer !important;
+      transition: all 0.2s ease;
+      color: #aaa;
+      border-radius: 0 10px 10px 0;
+      pointer-events: auto !important;
+      z-index: 5;
+      position: relative;
+    }
+    
+    .password-toggle-btn:hover {
+      background: rgba(108,99,255,0.3);
+      color: var(--primary);
+    }
+    
+    .password-toggle-btn i {
+      pointer-events: none;
+    }
+    
+    .input-group .form-control {
+      border-radius: 0;
+    }
+    
+    .input-group .input-group-text:first-child {
+      border-radius: 10px 0 0 10px;
+    }
+    
+    .alert { border-radius: 12px; font-size: 0.9rem; }
+    .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
   </style>
 </head>
 <body>
@@ -33,21 +63,23 @@
       <p style="color:#ccc">Welcome back! Login to your account</p>
     </div>
 
-    {% if error %}
-    <div class="alert alert-danger alert-dismissible fade show border-0 rounded-3" role="alert" style="background:rgba(220,53,69,0.15); color:#ff6b6b;">
-      <i class="bi bi-exclamation-circle me-2"></i>{{ error }}
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-    </div>
-    {% endif %}
+    <div id="alertContainer">
+      {% if error %}
+      <div class="alert alert-danger alert-dismissible fade show border-0 rounded-3" role="alert" style="background:rgba(220,53,69,0.15); color:#ff6b6b;">
+        <i class="bi bi-exclamation-circle me-2"></i>{{ error }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      </div>
+      {% endif %}
 
-    {% if success %}
-    <div class="alert alert-success alert-dismissible fade show border-0 rounded-3" role="alert" style="background:rgba(40,167,69,0.15); color:#6fcf97;">
-      <i class="bi bi-check-circle me-2"></i>{{ success }}
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      {% if success %}
+      <div class="alert alert-success alert-dismissible fade show border-0 rounded-3" role="alert" style="background:rgba(40,167,69,0.15); color:#6fcf97;">
+        <i class="bi bi-check-circle me-2"></i>{{ success }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
 
-    <form method="POST" action="/login">
+    <form method="POST" action="/login" id="loginForm">
       <div class="mb-3">
         <label class="form-label">Username</label>
         <div class="input-group">
@@ -55,13 +87,27 @@
           <input type="text" name="username" class="form-control" placeholder="Enter your username" required/>
         </div>
       </div>
-<div class="mb-4">
+      
+      <div class="mb-4">
         <label class="form-label">Password</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
-          <input type="password" name="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password"/>
+          <input type="password" 
+                 name="password" 
+                 id="passwordField"
+                 class="form-control" 
+                 placeholder="Enter your password" 
+                 required 
+                 autocomplete="current-password"/>
+          <button class="input-group-text password-toggle-btn" type="button" id="togglePasswordBtn" aria-label="Show or hide password" style="cursor: pointer;">
+            <i class="bi bi-eye-slash" id="toggleIcon"></i>
+          </button>
         </div>
+        <small class="text-muted" style="font-size: 0.7rem;">
+          <i class="bi bi-info-circle"></i> Click the eye icon to show/hide password
+        </small>
       </div>
+      
       <button type="submit" class="btn btn-login"><i class="bi bi-box-arrow-in-right me-2"></i>Login</button>
     </form>
 
@@ -69,6 +115,153 @@
     <p class="text-center mt-2 mb-0"><a href="/" style="color:#888;font-size:.85rem"><i class="bi bi-arrow-left me-1"></i>Back to Home</a></p>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  (function() {
+    const passwordInput = document.getElementById('passwordField');
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (!passwordInput || !toggleBtn || !toggleIcon) {
+      console.error("Required elements not found");
+      return;
+    }
+    
+    // Store cursor position before toggling
+    let cursorPosition = 0;
+    
+    // Function to save cursor position
+    function saveCursorPosition() {
+      if (document.activeElement === passwordInput) {
+        cursorPosition = passwordInput.selectionStart || 0;
+      }
+    }
+    
+    // Function to restore cursor position
+    function restoreCursorPosition() {
+      if (document.activeElement === passwordInput) {
+        passwordInput.setSelectionRange(cursorPosition, cursorPosition);
+      }
+    }
+    
+    // Save cursor position on input events
+    passwordInput.addEventListener('click', saveCursorPosition);
+    passwordInput.addEventListener('keyup', saveCursorPosition);
+    passwordInput.addEventListener('select', saveCursorPosition);
+    
+    function togglePasswordVisibility(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      
+      // Save current cursor position before changing type
+      saveCursorPosition();
+      
+      const currentType = passwordInput.getAttribute('type');
+      const currentValue = passwordInput.value;
+      
+      if (currentType === 'password') {
+        // Switch to text - SHOW PASSWORD
+        passwordInput.setAttribute('type', 'text');
+        toggleIcon.classList.remove('bi-eye-slash');
+        toggleIcon.classList.add('bi-eye');
+        toggleBtn.setAttribute('aria-label', 'Hide password');
+      } else {
+        // Switch to password - HIDE PASSWORD
+        passwordInput.setAttribute('type', 'password');
+        toggleIcon.classList.remove('bi-eye');
+        toggleIcon.classList.add('bi-eye-slash');
+        toggleBtn.setAttribute('aria-label', 'Show password');
+      }
+      
+      // Restore the value (important for maintaining cursor position)
+      passwordInput.value = currentValue;
+      
+      // Restore cursor position after a tiny delay to ensure DOM updates
+      setTimeout(() => {
+        restoreCursorPosition();
+        // Keep focus on the input
+        passwordInput.focus();
+      }, 0);
+    }
+    
+    // Remove existing listeners to avoid duplicates
+    toggleBtn.removeEventListener('click', togglePasswordVisibility);
+    toggleBtn.addEventListener('click', togglePasswordVisibility);
+    
+    // Prevent the button from stealing focus
+    toggleBtn.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+    });
+    
+    // Ensure button is clickable
+    toggleBtn.style.pointerEvents = 'auto';
+    toggleBtn.style.cursor = 'pointer';
+    
+    // Also handle if user manually types or changes selection
+    passwordInput.addEventListener('keydown', saveCursorPosition);
+    passwordInput.addEventListener('mouseup', saveCursorPosition);
+    
+    // Optional: Client-side validation
+    const form = document.getElementById('loginForm');
+    const usernameInput = document.querySelector('input[name="username"]');
+    const alertContainer = document.getElementById('alertContainer');
+    
+    function showClientAlert(message, type = 'danger') {
+      if (!alertContainer) return;
+      
+      const existingTempAlert = document.querySelector('.temp-client-alert');
+      if (existingTempAlert) existingTempAlert.remove();
+      
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} alert-dismissible fade show border-0 rounded-3 temp-client-alert`;
+      alertDiv.style.background = type === 'danger' ? 'rgba(220,53,69,0.2)' : 'rgba(40,167,69,0.2)';
+      alertDiv.style.color = type === 'danger' ? '#ff8a8a' : '#8cffb0';
+      alertDiv.innerHTML = `
+        <i class="bi ${type === 'danger' ? 'bi-exclamation-circle' : 'bi-check-circle'} me-2"></i>${message}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      `;
+      alertContainer.prepend(alertDiv);
+      
+      setTimeout(() => {
+        if (alertDiv && alertDiv.remove) alertDiv.remove();
+      }, 4000);
+      
+      const closeBtn = alertDiv.querySelector('.btn-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => alertDiv.remove());
+      }
+    }
+    
+    if (form) {
+      form.addEventListener('submit', function(event) {
+        const usernameVal = usernameInput ? usernameInput.value.trim() : '';
+        const passwordVal = passwordInput ? passwordInput.value : '';
+        
+        if (!usernameVal) {
+          event.preventDefault();
+          showClientAlert('⚠️ Username is required', 'danger');
+          if (usernameInput) usernameInput.focus();
+          return false;
+        }
+        
+        if (!passwordVal) {
+          event.preventDefault();
+          showClientAlert('🔒 Password is required', 'danger');
+          if (passwordInput) passwordInput.focus();
+          return false;
+        }
+        
+        return true;
+      });
+    }
+    
+    console.log("Password toggle ready - cursor position will be maintained!");
+  })();
+</script>
+
 </body>
 </html>

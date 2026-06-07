@@ -16,8 +16,36 @@
     .form-label { color: #aaa; font-size: .9rem; }
     .btn-register { background: var(--primary); border: none; border-radius: 10px; padding: 13px; font-weight: 600; font-size: 1rem; width: 100%; color: #fff; transition: all .3s; }
     .btn-register:hover { background: #5a52d5; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,0.4); color: #fff; }
-    .input-group-text { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; border-radius: 10px 0 0 10px; }
-    .input-group .form-control { border-radius: 0 10px 10px 0; }
+    .input-group-text { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; }
+    
+    /* Password toggle button styling */
+    .password-toggle-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-left: none;
+      cursor: pointer !important;
+      transition: all 0.2s ease;
+      color: #aaa;
+      border-radius: 0 10px 10px 0;
+      pointer-events: auto !important;
+      z-index: 5;
+    }
+    
+    .password-toggle-btn:hover {
+      background: rgba(108,99,255,0.3);
+      color: var(--primary);
+    }
+    
+    .password-toggle-btn i {
+      pointer-events: none;
+    }
+    
+    .input-group .input-group-text:first-child {
+      border-radius: 10px 0 0 10px;
+    }
+    
+    .alert { border-radius: 12px; font-size: 0.9rem; }
+    .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
   </style>
 </head>
 <body>
@@ -46,6 +74,7 @@
           <input type="text" name="username" class="form-control" placeholder="Choose a username" required minlength="3"/>
         </div>
       </div>
+      
       <div class="mb-3">
         <label class="form-label">Email Address</label>
         <div class="input-group">
@@ -53,21 +82,32 @@
           <input type="email" name="email" class="form-control" placeholder="your@email.com" required/>
         </div>
       </div>
-        <div class="mb-3">
+      
+      <!-- PASSWORD FIELD WITH SHOW/HIDE -->
+      <div class="mb-3">
         <label class="form-label">Password</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
           <input type="password" name="password" id="password" class="form-control" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password"/>
+          <button class="input-group-text password-toggle-btn" type="button" id="togglePasswordBtn" aria-label="Show or hide password">
+            <i class="bi bi-eye-slash" id="passwordIcon"></i>
+          </button>
         </div>
       </div>
+      
+      <!-- CONFIRM PASSWORD FIELD WITH SHOW/HIDE -->
       <div class="mb-4">
         <label class="form-label">Confirm Password</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
           <input type="password" name="confirm_password" id="confirm" class="form-control" placeholder="Repeat your password" required autocomplete="new-password"/>
+          <button class="input-group-text password-toggle-btn" type="button" id="toggleConfirmBtn" aria-label="Show or hide confirm password">
+            <i class="bi bi-eye-slash" id="confirmIcon"></i>
+          </button>
         </div>
         <div id="matchError" class="text-danger small mt-1 d-none"><i class="bi bi-x-circle me-1"></i>Passwords do not match</div>
       </div>
+      
       <button type="submit" class="btn btn-register"><i class="bi bi-person-plus me-2"></i>Create Account</button>
     </form>
 
@@ -75,15 +115,133 @@
     <p class="text-center mt-2 mb-0"><a href="/" style="color:#888;font-size:.85rem"><i class="bi bi-arrow-left me-1"></i>Back to Home</a></p>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-  document.getElementById('registerForm').addEventListener('submit', function(e) {
-    const pw = document.getElementById('password').value;
-    const cf = document.getElementById('confirm').value;
-    const err = document.getElementById('matchError');
-    if (pw !== cf) { e.preventDefault(); err.classList.remove('d-none'); }
-    else { err.classList.add('d-none'); }
-  });
+  (function() {
+    // ========== PASSWORD TOGGLE FUNCTION ==========
+    function createPasswordToggle(passwordInput, toggleBtn, toggleIcon) {
+      if (!passwordInput || !toggleBtn || !toggleIcon) return;
+      
+      let cursorPosition = 0;
+      
+      function saveCursorPosition() {
+        if (document.activeElement === passwordInput) {
+          cursorPosition = passwordInput.selectionStart || 0;
+        }
+      }
+      
+      function restoreCursorPosition() {
+        if (document.activeElement === passwordInput) {
+          passwordInput.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      }
+      
+      passwordInput.addEventListener('click', saveCursorPosition);
+      passwordInput.addEventListener('keyup', saveCursorPosition);
+      passwordInput.addEventListener('select', saveCursorPosition);
+      passwordInput.addEventListener('keydown', saveCursorPosition);
+      passwordInput.addEventListener('mouseup', saveCursorPosition);
+      
+      function toggleVisibility(event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        
+        saveCursorPosition();
+        
+        const currentType = passwordInput.getAttribute('type');
+        const currentValue = passwordInput.value;
+        
+        if (currentType === 'password') {
+          passwordInput.setAttribute('type', 'text');
+          toggleIcon.classList.remove('bi-eye-slash');
+          toggleIcon.classList.add('bi-eye');
+          toggleBtn.setAttribute('aria-label', 'Hide password');
+        } else {
+          passwordInput.setAttribute('type', 'password');
+          toggleIcon.classList.remove('bi-eye');
+          toggleIcon.classList.add('bi-eye-slash');
+          toggleBtn.setAttribute('aria-label', 'Show password');
+        }
+        
+        passwordInput.value = currentValue;
+        
+        setTimeout(() => {
+          restoreCursorPosition();
+          passwordInput.focus();
+        }, 0);
+      }
+      
+      toggleBtn.removeEventListener('click', toggleVisibility);
+      toggleBtn.addEventListener('click', toggleVisibility);
+      
+      toggleBtn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+      });
+      
+      toggleBtn.style.pointerEvents = 'auto';
+      toggleBtn.style.cursor = 'pointer';
+    }
+    
+    // Initialize Password field toggle
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const passwordIcon = document.getElementById('passwordIcon');
+    createPasswordToggle(passwordInput, togglePasswordBtn, passwordIcon);
+    
+    // Initialize Confirm Password field toggle
+    const confirmInput = document.getElementById('confirm');
+    const toggleConfirmBtn = document.getElementById('toggleConfirmBtn');
+    const confirmIcon = document.getElementById('confirmIcon');
+    createPasswordToggle(confirmInput, toggleConfirmBtn, confirmIcon);
+    
+    // ========== PASSWORD MATCH VALIDATION ==========
+    const form = document.getElementById('registerForm');
+    const matchErrorDiv = document.getElementById('matchError');
+    
+    function validatePasswordMatch() {
+      const pw = passwordInput.value;
+      const cf = confirmInput.value;
+      
+      if (pw !== cf && cf.length > 0) {
+        matchErrorDiv.classList.remove('d-none');
+        return false;
+      } else {
+        matchErrorDiv.classList.add('d-none');
+        return true;
+      }
+    }
+    
+    // Real-time validation when typing
+    if (confirmInput) {
+      confirmInput.addEventListener('keyup', validatePasswordMatch);
+    }
+    if (passwordInput) {
+      passwordInput.addEventListener('keyup', validatePasswordMatch);
+    }
+    
+    // Form submission validation
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const pw = passwordInput.value;
+        const cf = confirmInput.value;
+        
+        if (pw !== cf) {
+          e.preventDefault();
+          matchErrorDiv.classList.remove('d-none');
+          confirmInput.focus();
+        } else {
+          matchErrorDiv.classList.add('d-none');
+        }
+      });
+    }
+    
+    console.log("Register page ready - Password show/hide enabled for both fields!");
+  })();
 </script>
+
 </body>
 </html>
