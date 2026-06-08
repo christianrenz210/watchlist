@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, g
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
@@ -50,11 +50,19 @@ else:
     import sqlite3
 
 def get_db():
-    if USE_PG:
-        return psycopg2.connect(DATABASE_URL)
-    conn = sqlite3.connect('watchlist.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    if 'db' not in g:
+        if USE_PG:
+            g.db = psycopg2.connect(DATABASE_URL)
+        else:
+            g.db = sqlite3.connect('watchlist.db')
+            g.db.row_factory = sqlite3.Row
+    return g.db
+
+@app.teardown_appcontext
+def close_db(error):
+    db = getattr(g, 'db', None)
+    if db is not None:
+        db.close()
 
 P = '%s' if USE_PG else '?'
 
@@ -391,7 +399,9 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
-    init_db()
+    with app.app_context():
+        init_db()
     app.run(debug=True)
 else:
-    init_db()
+    with app.app_context():
+        init_db()
