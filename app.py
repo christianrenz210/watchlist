@@ -94,6 +94,8 @@ def init_db():
                 episode_number INTEGER NOT NULL, title TEXT DEFAULT '',
                 watched INTEGER DEFAULT 0,
                 FOREIGN KEY (watchlist_id) REFERENCES watchlist(id))''')
+            exe(conn, "ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS total_episodes INTEGER DEFAULT 0")
+            exe(conn, "ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT ''")
         else:
             exe(conn, '''CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL,
